@@ -52,6 +52,9 @@ axiolab/
 │   │   ├── queues/         # Bull queue for AI processing
 │   │   └── utils/          # Helpers & validation
 │   ├── .env               # Environment variables
+│   ├── README.md          # Backend documentation
+│   ├── QUICK_START.md     # Quick start guide
+│   ├── API_TESTING.md     # API testing guide
 │   └── package.json
 │
 ├── app/                     # Next.js App Router
@@ -81,11 +84,19 @@ axiolab/
 │   ├── src/
 │   │   └── main.js        # Main app logic
 │   ├── index.html
-│   └── vite.config.js
+│   ├── vite.config.js
+│   └── README.md          # Student app documentation
+│
+├── docs/                   # Documentation
+│   ├── FRONTEND_README.md  # Frontend documentation
+│   ├── ENV_SETUP.md        # Environment setup guide
+│   ├── TESTING_GUIDE.md    # Testing guide
+│   ├── QUICK_TEST.md       # Quick test guide
+│   └── SYSTEM_CHECK_REPORT.md
 │
 ├── docker-compose.yml      # MongoDB, Redis, MinIO containers
 ├── .env.local             # Frontend environment variables
-└── README.md
+└── README.md              # Main documentation
 ```
 
 ## 🚀 Quick Start
@@ -218,8 +229,14 @@ Lihat **backend/QUICK_START.md** untuk panduan lengkap!
 ## 📖 Dokumentasi
 
 - **Backend:** [backend/README.md](backend/README.md)
-- **Frontend:** [FRONTEND_README.md](FRONTEND_README.md)
+  - [Quick Start Guide](backend/QUICK_START.md) - Setup 5 menit
+  - [API Testing Guide](backend/API_TESTING.md) - Testing 23 endpoints
+  - [Implementation Summary](backend/IMPLEMENTATION_SUMMARY.md) - Overview implementasi
+- **Frontend:** [docs/FRONTEND_README.md](docs/FRONTEND_README.md)
 - **Student App:** [student-app/README.md](student-app/README.md)
+- **Testing:** [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)
+- **Environment Setup:** [docs/ENV_SETUP.md](docs/ENV_SETUP.md)
+- **Quick Test:** [docs/QUICK_TEST.md](docs/QUICK_TEST.md)
 
 ## 🎓 Cara Kerja Sistem
 
