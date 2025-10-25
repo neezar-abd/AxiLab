@@ -1,0 +1,22 @@
+{
+  "name": "axilab-student-app",
+  "version": "1.0.0",
+  "description": "AXI-Lab Student Tablet App - PWA for student data collection",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["pwa", "tablet", "student", "camera", "offline"],
+  "author": "AXI-Lab Team",
+  "license": "MIT",
+  "dependencies": {
+    "idb": "^8.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-pwa": "^0.17.0"
+  }
+}

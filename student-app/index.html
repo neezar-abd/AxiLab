@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AXI-Lab Student App</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      color: #1e40af;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+
+    #camera-view {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: none;
+    }
+
+    #canvas {
+      display: none;
+    }
+
+    #captured-photo {
+      width: 100%;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: none;
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: none;
+    }
+
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      display: block;
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+      display: block;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .data-list {
+      margin-top: 16px;
+    }
+
+    .data-item {
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .data-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2563eb;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login Screen -->
+    <div id="login-screen" class="card">
+      <h1>🎓 AXI-Lab</h1>
+      <p class="subtitle">Aplikasi Tablet Siswa</p>
+
+      <div class="input-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="masukkan email...">
+      </div>
+
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="masukkan password...">
+      </div>
+
+      <button class="btn btn-primary" onclick="login()">
+        <span>🔐</span>
+        <span>Login</span>
+      </button>
+
+      <div id="login-status" class="status"></div>
+    </div>
+
+    <!-- Join Practicum Screen -->
+    <div id="join-screen" class="card hidden">
+      <h1>Gabung Praktikum</h1>
+      <p class="subtitle" id="student-name"></p>
+
+      <div class="input-group">
+        <label for="practicum-code">Kode Praktikum</label>
+        <input type="text" id="practicum-code" placeholder="Masukkan kode praktikum...">
+      </div>
+
+      <button class="btn btn-success" onclick="joinPracticum()">
+        <span>✅</span>
+        <span>Gabung</span>
+      </button>
+
+      <div id="join-status" class="status"></div>
+    </div>
+
+    <!-- Data Collection Screen -->
+    <div id="collection-screen" class="card hidden">
+      <h1 id="practicum-title">Loading...</h1>
+      <p class="subtitle" id="practicum-info"></p>
+
+      <button class="btn btn-primary" onclick="startCamera()">
+        <span>📸</span>
+        <span>Ambil Foto</span>
+      </button>
+
+      <video id="camera-view" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      <img id="captured-photo" alt="Captured">
+
+      <button id="capture-btn" class="btn btn-success hidden" onclick="capturePhoto()">
+        <span>✔️</span>
+        <span>Simpan Foto</span>
+      </button>
+
+      <button id="upload-btn" class="btn btn-success hidden" onclick="uploadPhoto()">
+        <span>☁️</span>
+        <span>Upload Foto</span>
+      </button>
+
+      <div id="upload-status" class="status"></div>
+
+      <div class="data-list" id="data-list"></div>
+
+      <button class="btn btn-primary" onclick="submitAll()" style="margin-top: 24px;">
+        <span>✅</span>
+        <span>Submit Semua Data</span>
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

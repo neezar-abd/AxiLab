@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: axilab-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: axilab2025
+      MONGO_INITDB_DATABASE: axilab
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - axilab-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: axilab-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - axilab-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: axilab-minio
+    restart: always
+    ports:
+      - "9000:9000"      # API port
+      - "9001:9001"      # Console UI
+    environment:
+      MINIO_ROOT_USER: axilab
+      MINIO_ROOT_PASSWORD: axilab2025
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - axilab-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+  minio_data:
+
+networks:
+  axilab-network:
+    driver: bridge
