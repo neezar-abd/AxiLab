@@ -268,9 +268,13 @@ export default function SubmissionDetailPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <User className="w-8 h-8 text-blue-600 mb-2" />
           <p className="text-sm text-gray-600">Siswa</p>
-          <p className="text-xl font-bold text-gray-900">{submission.student.name}</p>
-          {submission.student.class && (
-            <p className="text-sm text-gray-600">{submission.student.class}</p>
+          <p className="text-xl font-bold text-gray-900">
+            {submission.student?.name || submission.studentName || 'Unknown Student'}
+          </p>
+          {(submission.student?.class || submission.studentClass) && (
+            <p className="text-sm text-gray-600">
+              {submission.student?.class || submission.studentClass}
+            </p>
           )}
         </div>
 
@@ -316,11 +320,12 @@ export default function SubmissionDetailPage() {
       {/* Data Points */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Data yang Dikumpulkan ({submission.dataPoints.length})
+          Data yang Dikumpulkan ({submission.dataPoints?.length || 0})
         </h2>
 
         <div className="space-y-4">
-          {submission.dataPoints.map((dataPoint, index) => (
+          {submission.dataPoints && submission.dataPoints.length > 0 ? (
+            submission.dataPoints.map((dataPoint, index) => (
             <div
               key={index}
               className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
@@ -386,7 +391,13 @@ export default function SubmissionDetailPage() {
                 </div>
               )}
             </div>
-          ))}
+          ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Belum ada data yang dikumpulkan</p>
+            </div>
+          )}
         </div>
       </div>
 

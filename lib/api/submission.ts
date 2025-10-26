@@ -15,19 +15,21 @@ export interface DataPoint {
 
 export interface Submission {
   _id: string;
-  practicum: {
+  practicum?: {
     _id: string;
     title: string;
     code: string;
   };
-  student: {
+  student?: {
     _id: string;
     name: string;
     email: string;
     studentId?: string;
     class?: string;
   };
-  dataPoints: DataPoint[];
+  studentName?: string; // Fallback if student not populated
+  studentClass?: string; // Fallback if student not populated
+  dataPoints?: DataPoint[];
   status: 'draft' | 'submitted' | 'graded';
   score?: number;
   feedback?: string;
