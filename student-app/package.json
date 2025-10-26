@@ -8,12 +8,19 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": ["pwa", "tablet", "student", "camera", "offline"],
+  "keywords": [
+    "pwa",
+    "tablet",
+    "student",
+    "camera",
+    "offline"
+  ],
   "author": "AXI-Lab Team",
   "license": "MIT",
   "dependencies": {
-    "idb": "^8.0.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "browser-image-compression": "^2.0.2",
+    "idb": "^8.0.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",

@@ -189,6 +189,21 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    /* Offline Indicator */
+    #offline-indicator.show {
+      transform: translateY(0) !important;
+    }
+
+    #offline-indicator.online {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+      transform: translateY(0) !important;
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
   </style>
 </head>
 <body>

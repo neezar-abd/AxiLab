@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { getSocket, joinPracticum, leavePracticum } from '@/lib/socket'
-import { Activity, Users, CheckCircle, Clock, Sparkles } from 'lucide-react'
+import { useSocket } from '@/lib/contexts/SocketContext'
+import { Activity, Users, CheckCircle, Clock, Sparkles, Radio } from 'lucide-react'
 
 interface Submission {
   _id: string
@@ -24,6 +24,7 @@ export default function RealtimeMonitorPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [practicum, setPracticum] = useState<any>(null)
+  const { socket, connected, joinPracticum, leavePracticum, on, off } = useSocket()
 
   useEffect(() => {
     if (!id) return
@@ -60,89 +61,102 @@ export default function RealtimeMonitorPage() {
     load()
 
     // Setup Socket.IO untuk real-time updates
-    const socket = getSocket()
-    if (socket) {
-      // Join room praktikum ini
-      joinPracticum(id)
+    if (!socket || !id) return
 
-      // Listen event: siswa baru join
-      socket.on('new-submission', (data: any) => {
-        console.log('🆕 New submission:', data)
-        toast.success(`${data.studentName} bergabung!`)
-        setSubmissions((prev) => [data.submission, ...prev])
-      })
+    // Join room praktikum ini
+    joinPracticum(id)
 
-      // Listen event: siswa upload data baru
-      socket.on('data-uploaded', (data: any) => {
-        console.log('📤 Data uploaded:', data)
-        toast.success(`${data.studentName} upload data ${data.dataPointNumber}`)
-        setSubmissions((prev) =>
-          prev.map((sub) =>
-            sub._id === data.submissionId
-              ? { ...sub, data: [...sub.data, data.dataPoint] }
-              : sub
-          )
+    // Listen event: siswa baru join
+    on('new-submission', (data: any) => {
+      console.log('🆕 New submission:', data)
+      toast.success(`${data.studentName} bergabung!`)
+      setSubmissions((prev) => [data.submission, ...prev])
+    })
+
+    // Listen event: siswa upload data baru
+    on('data-uploaded', (data: any) => {
+      console.log('📤 Data uploaded:', data)
+      toast.success(`${data.studentName} upload data baru`)
+      // Reload submissions untuk get latest data
+      load()
+    })
+
+    // Listen event: AI selesai analisis
+    on('ai-analysis-complete', (data: any) => {
+      console.log('🤖 AI analysis complete:', data)
+      toast.success(`AI selesai analisis foto ${data.studentName}`, { icon: '🤖' })
+      setSubmissions((prev) =>
+        prev.map((sub) =>
+          sub._id === data.submissionId
+            ? {
+                ...sub,
+                data: sub.data.map((d) =>
+                  d.number === data.dataPointNumber
+                    ? { ...d, aiAnalysis: data.analysis, aiStatus: 'completed' }
+                    : d
+                ),
+              }
+            : sub
         )
-      })
+      )
+    })
 
-      // Listen event: AI selesai analisis
-      socket.on('ai-analysis-complete', (data: any) => {
-        console.log('🤖 AI analysis complete:', data)
-        toast.success(`AI selesai analisis foto ${data.studentName}`, { icon: '🤖' })
-        setSubmissions((prev) =>
-          prev.map((sub) =>
-            sub._id === data.submissionId
-              ? {
-                  ...sub,
-                  data: sub.data.map((d) =>
-                    d.number === data.dataPointNumber
-                      ? { ...d, aiAnalysis: data.analysis, aiStatus: 'completed' }
-                      : d
-                  ),
-                }
-              : sub
-          )
+    // Listen event: submission di-grade
+    on('submission-graded', (data: any) => {
+      console.log('✅ Submission graded:', data)
+      toast.success(`Nilai ${data.studentName}: ${data.score}`)
+      setSubmissions((prev) =>
+        prev.map((sub) =>
+          sub._id === data.submissionId
+            ? { ...sub, status: 'graded', score: data.score }
+            : sub
         )
-      })
-
-      // Listen event: submission di-grade
-      socket.on('submission-graded', (data: any) => {
-        console.log('✅ Submission graded:', data)
-        toast.success(`Nilai ${data.studentName}: ${data.score}`)
-        setSubmissions((prev) =>
-          prev.map((sub) =>
-            sub._id === data.submissionId
-              ? { ...sub, status: 'graded', score: data.score }
-              : sub
-          )
-        )
-      })
-    }
+      )
+    })
 
     return () => {
       mounted = false
-      if (socket) {
+      if (id) {
         leavePracticum(id)
-        socket.off('new-submission')
-        socket.off('data-uploaded')
-        socket.off('ai-analysis-complete')
-        socket.off('submission-graded')
+        off('new-submission')
+        off('data-uploaded')
+        off('ai-analysis-complete')
+        off('submission-graded')
       }
     }
-  }, [id])
+  }, [id, socket, connected, joinPracticum, leavePracticum, on, off])
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Monitor Real-time</h1>
-        {practicum && (
-          <div className="mt-2 text-gray-600">
-            <span className="font-medium">{practicum.title}</span>
-            <span className="mx-2">•</span>
-            <span>Kode: {practicum.code}</span>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Monitor Real-time</h1>
+            {practicum && (
+              <div className="mt-2 text-gray-600">
+                <span className="font-medium">{practicum.title}</span>
+                <span className="mx-2">•</span>
+                <span>Kode: {practicum.code}</span>
+              </div>
+            )}
           </div>
-        )}
+          
+          {/* Connection Status */}
+          <div className="flex items-center gap-2">
+            {connected ? (
+              <>
+                <Radio className="w-5 h-5 text-green-500 animate-pulse" />
+                <span className="text-sm font-medium text-green-600">Live</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-500">Disconnected</span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}

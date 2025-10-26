@@ -18,6 +18,8 @@ import {
   Loader2,
   ExternalLink,
   Activity,
+  Download,
+  FileArchive,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -28,6 +30,7 @@ export default function PracticumDetailPage() {
 
   const [practicum, setPracticum] = useState<Practicum | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingReports, setDownloadingReports] = useState(false);
 
   useEffect(() => {
     loadPracticum();
@@ -68,6 +71,54 @@ export default function PracticumDetailPage() {
     } catch (error: any) {
       console.error('Error deleting practicum:', error);
       toast.error('Gagal menghapus praktikum');
+    }
+  };
+
+  const handleDownloadAllReports = async () => {
+    if (!practicum) return;
+
+    if (practicum.totalSubmissions === 0) {
+      toast.error('Belum ada submission untuk practicum ini');
+      return;
+    }
+
+    try {
+      setDownloadingReports(true);
+      toast.loading('Generating bulk reports...', { id: 'bulk-reports' });
+
+      // Call API to generate bulk reports (will return a ZIP file)
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/report/generate-bulk/${id}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate bulk reports');
+      }
+
+      // Download the ZIP file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `laporan_${practicum.code}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Laporan berhasil didownload!', { id: 'bulk-reports' });
+    } catch (error: any) {
+      console.error('Error downloading reports:', error);
+      toast.error('Gagal mendownload laporan', { id: 'bulk-reports' });
+    } finally {
+      setDownloadingReports(false);
     }
   };
 
@@ -126,6 +177,24 @@ export default function PracticumDetailPage() {
           </div>
 
           <div className="flex items-center gap-2 ml-4">
+            <button
+              onClick={handleDownloadAllReports}
+              disabled={downloadingReports || practicum.totalSubmissions === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={practicum.totalSubmissions === 0 ? 'Belum ada submission' : 'Download semua laporan (ZIP)'}
+            >
+              {downloadingReports ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <>
+                  <FileArchive className="w-4 h-4" />
+                  <span>Download Semua Laporan</span>
+                </>
+              )}
+            </button>
             <Link
               href={`/dashboard/practicums/${id}/monitor`}
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"

@@ -13,17 +13,24 @@ export const aiAnalysisQueue = new Queue('ai-analysis', {
 /**
  * Add job ke queue untuk AI analysis
  */
-export async function enqueueAIAnalysis(submissionId, dataPointNumber, field, fileUrl) {
+export async function enqueueAIAnalysis(submissionId, dataPointNumber, fieldName, fileUrl, aiPrompt) {
   try {
+    // Extract bucket and filename from URL
+    const urlParts = fileUrl.split('/')
+    const filename = urlParts[urlParts.length - 1]
+    const bucket = urlParts.includes('photos') ? process.env.MINIO_BUCKET_PHOTOS : process.env.MINIO_BUCKET_VIDEOS
+    
     const job = await aiAnalysisQueue.add(
       'analyze-image',
       {
         submissionId,
         dataPointNumber,
-        fieldId: field.id,
-        fieldLabel: field.label,
-        fieldConfig: field,
-        fileUrl
+        fieldName,
+        fileUrl,
+        bucket: bucket || 'photos',
+        filename,
+        mimeType: 'image/jpeg', // Will be handled by MinIO
+        aiPrompt: aiPrompt || 'Analisis foto ini dengan detail'
       },
       {
         attempts: 3,
@@ -56,9 +63,12 @@ export function setupAIWorker(io) {
   const worker = new Worker(
     'ai-analysis',
     async (job) => {
-      const { submissionId, dataPointNumber, fieldConfig, fileUrl } = job.data
+      const { submissionId, dataPointNumber, fieldName, bucket, filename, mimeType, aiPrompt } = job.data
       
-      console.log(`🤖 Processing AI analysis for submission ${submissionId}, data point ${dataPointNumber}`)
+      console.log(`\n🤖 [AI Worker] Processing submission ${submissionId}`)
+      console.log(`   📊 Data point: #${dataPointNumber}`)
+      console.log(`   📷 Field: ${fieldName}`)
+      console.log(`   🗂️  File: ${bucket}/${filename}`)
       
       try {
         // Update status ke processing
@@ -74,6 +84,8 @@ export function setupAIWorker(io) {
           }
         )
         
+        console.log(`   ⏳ Status updated to 'processing'`)
+        
         // Emit event ke frontend
         if (io) {
           io.emitToSubmission(submissionId, 'ai-status-update', {
@@ -82,21 +94,15 @@ export function setupAIWorker(io) {
           })
         }
         
-        // Extract bucket dan filename dari URL
-        const urlParts = fileUrl.split('/')
-        const filename = urlParts[urlParts.length - 1]
-        const bucket = process.env.MINIO_BUCKET_PHOTOS
-        
         // Download file dari MinIO
-        console.log(`📥 Downloading file: ${filename}`)
+        console.log(`   📥 Downloading file from MinIO...`)
         const fileBuffer = await minioService.downloadFile(bucket, filename)
-        
-        // Generate prompt
-        const prompt = geminiService.generatePromptForField(fieldConfig)
+        console.log(`   ✅ File downloaded (${(fileBuffer.length / 1024).toFixed(2)} KB)`)
         
         // Call Gemini API
-        console.log(`🧠 Calling Gemini API...`)
-        const analysisResult = await geminiService.analyzeImage(fileBuffer, prompt)
+        console.log(`   🧠 Calling Gemini API...`)
+        const analysisResult = await geminiService.analyzeImage(fileBuffer, aiPrompt, mimeType)
+        console.log(`   ✅ AI analysis completed`)
         
         // Save hasil ke database
         const submission = await Submission.findOneAndUpdate(
@@ -112,13 +118,12 @@ export function setupAIWorker(io) {
             }
           },
           { new: true }
-        )
+        ).populate('practicumId', '_id title')
         
-        console.log(`✅ AI analysis completed for submission ${submissionId}`)
+        console.log(`   💾 AI result saved to database`)
         
         // Emit success event
-        if (io) {
-          // Get practicum untuk emit ke teacher room
+        if (io && submission) {
           const dataPoint = submission.data.find(d => d.number === dataPointNumber)
           
           io.emitToSubmission(submissionId, 'ai-analysis-complete', {
@@ -128,18 +133,30 @@ export function setupAIWorker(io) {
           })
           
           // Emit ke practicum room (untuk guru)
-          io.emitToPracticum(submission.practicumId.toString(), 'ai-analysis-complete', {
+          io.emitToPracticum(submission.practicumId._id.toString(), 'ai-analysis-complete', {
             submissionId: submissionId.toString(),
             studentName: submission.studentName,
             dataPointNumber,
-            analysis: analysisResult
+            fieldName,
+            analysis: analysisResult,
+            timestamp: new Date()
           })
+          
+          console.log(`   📡 Socket.io events emitted`)
         }
         
-        return { success: true, analysis: analysisResult }
+        console.log(`   ✅ AI Analysis completed successfully!\n`)
+        
+        return { 
+          success: true, 
+          analysis: analysisResult,
+          submissionId,
+          dataPointNumber,
+          fieldName
+        }
         
       } catch (error) {
-        console.error(`❌ AI analysis failed for submission ${submissionId}:`, error)
+        console.error(`   ❌ AI analysis failed:`, error.message)
         
         // Update status ke failed
         await Submission.updateOne(
@@ -150,7 +167,8 @@ export function setupAIWorker(io) {
           {
             $set: {
               'data.$.aiStatus': 'failed',
-              'data.$.aiError': error.message
+              'data.$.aiError': error.message,
+              'data.$.aiProcessedAt': new Date()
             }
           }
         )
@@ -162,6 +180,8 @@ export function setupAIWorker(io) {
             error: error.message
           })
         }
+        
+        console.error(`   ⚠️  Job will be retried (if attempts remaining)\n`)
         
         throw error
       }

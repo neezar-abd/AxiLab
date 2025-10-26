@@ -1,5 +1,6 @@
 import { openDB } from 'idb';
 import axios from 'axios';
+import imageCompression from 'browser-image-compression';
 
 // API Configuration
 const API_URL = 'http://localhost:5000/api';
@@ -123,10 +124,17 @@ window.startCamera = async function() {
   }
 };
 
-window.capturePhoto = function() {
+window.capturePhoto = async function() {
   const videoEl = document.getElementById('camera-view');
   const canvasEl = document.getElementById('canvas');
   const capturedEl = document.getElementById('captured-photo');
+  const captureBtn = document.getElementById('capture-btn');
+  const statusEl = document.getElementById('upload-status');
+
+  // Disable button while processing
+  captureBtn.disabled = true;
+  captureBtn.innerHTML = '<div class="spinner"></div><span>Processing...</span>';
+  showStatus(statusEl, 'Compressing image...', 'success');
 
   canvasEl.width = videoEl.videoWidth;
   canvasEl.height = videoEl.videoHeight;
@@ -134,9 +142,36 @@ window.capturePhoto = function() {
   const ctx = canvasEl.getContext('2d');
   ctx.drawImage(videoEl, 0, 0);
 
-  canvasEl.toBlob((blob) => {
-    capturedPhotoBlob = blob;
-    capturedEl.src = URL.createObjectURL(blob);
+  canvasEl.toBlob(async (blob) => {
+    // Compress image before storing
+    try {
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
+      console.log('Original size:', originalSizeMB, 'MB');
+      
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      });
+      
+      const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
+      const ratio = ((1 - compressedFile.size / file.size) * 100).toFixed(0);
+      console.log('Compressed size:', compressedSizeMB, 'MB');
+      console.log('Reduced by:', ratio, '%');
+      
+      showStatus(statusEl, `Image compressed by ${ratio}% (${originalSizeMB}MB → ${compressedSizeMB}MB)`, 'success');
+      
+      capturedPhotoBlob = compressedFile;
+    } catch (error) {
+      console.error('Compression error:', error);
+      showStatus(statusEl, 'Compression failed, using original image', 'error');
+      // Fallback to original
+      capturedPhotoBlob = blob;
+    }
+    
+    capturedEl.src = URL.createObjectURL(capturedPhotoBlob);
     capturedEl.style.display = 'block';
 
     // Stop camera
@@ -146,7 +181,9 @@ window.capturePhoto = function() {
     }
 
     videoEl.style.display = 'none';
-    document.getElementById('capture-btn').classList.add('hidden');
+    captureBtn.classList.add('hidden');
+    captureBtn.disabled = false;
+    captureBtn.innerHTML = '<span>📸</span><span>Ambil Foto</span>';
     document.getElementById('upload-btn').classList.remove('hidden');
   }, 'image/jpeg', 0.9);
 };
@@ -168,6 +205,11 @@ window.uploadPhoto = async function() {
     formData.append('submissionId', currentSubmission._id);
     formData.append('dataPointNumber', Date.now());
     formData.append('data', JSON.stringify({ timestamp: new Date().toISOString() }));
+    
+    // Show file size info
+    const fileSizeKB = (capturedPhotoBlob.size / 1024).toFixed(2);
+    console.log(`Uploading compressed image: ${fileSizeKB} KB`);
+    
     formData.append('files', capturedPhotoBlob, `photo_${Date.now()}.jpg`);
 
     const response = await axios.post(
@@ -182,7 +224,7 @@ window.uploadPhoto = async function() {
     );
 
     if (response.data.success) {
-      showStatus(statusEl, 'Foto berhasil diupload!', 'success');
+      showStatus(statusEl, `Foto berhasil diupload! (${fileSizeKB} KB)`, 'success');
       
       // Save to IndexedDB for offline viewing
       const db = await initDB();
@@ -317,9 +359,237 @@ window.addEventListener('load', async () => {
     document.getElementById('join-screen').classList.remove('hidden');
     document.getElementById('student-name').textContent = `Halo, ${currentUser.name}!`;
   }
+
+  // Setup offline/online detection
+  setupOfflineDetection();
+  
+  // Process upload queue when online
+  if (navigator.onLine) {
+    processUploadQueue();
+  }
 });
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+  navigator.serviceWorker.register('/sw.js')
+    .then((registration) => {
+      console.log('✅ Service Worker registered:', registration.scope);
+      
+      // Listen for updates
+      registration.addEventListener('updatefound', () => {
+        console.log('🔄 Service Worker update found');
+      });
+      
+      // Request sync permission
+      if ('sync' in registration) {
+        console.log('✅ Background Sync supported');
+      }
+    })
+    .catch((error) => {
+      console.error('❌ Service Worker registration failed:', error);
+    });
+
+  // Listen for messages from service worker
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    console.log('[SW Message]', event.data);
+    
+    if (event.data.type === 'SYNC_UPLOADS') {
+      console.log('📤 Sync uploads triggered by SW');
+      processUploadQueue();
+    }
+  });
 }
+
+// ========== OFFLINE DETECTION ==========
+function setupOfflineDetection() {
+  const offlineIndicator = createOfflineIndicator();
+  document.body.appendChild(offlineIndicator);
+
+  function updateOnlineStatus() {
+    if (navigator.onLine) {
+      console.log('🌐 Online');
+      offlineIndicator.classList.remove('show');
+      offlineIndicator.classList.add('online');
+      offlineIndicator.innerHTML = '✅ Online - Syncing...';
+      
+      setTimeout(() => {
+        offlineIndicator.classList.remove('online');
+      }, 2000);
+      
+      // Process queued uploads
+      processUploadQueue();
+    } else {
+      console.log('📵 Offline');
+      offlineIndicator.classList.add('show');
+      offlineIndicator.innerHTML = '📵 Offline Mode - Data will sync when online';
+    }
+  }
+
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  
+  // Initial check
+  updateOnlineStatus();
+}
+
+function createOfflineIndicator() {
+  const indicator = document.createElement('div');
+  indicator.id = 'offline-indicator';
+  indicator.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10000;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  `;
+  
+  return indicator;
+}
+
+// ========== UPLOAD QUEUE PROCESSING ==========
+async function processUploadQueue() {
+  if (!navigator.onLine) {
+    console.log('📵 Offline - skipping queue processing');
+    return;
+  }
+
+  try {
+    const db = await initDB();
+    const queue = await db.getAll('queue');
+    
+    if (queue.length === 0) {
+      console.log('✅ Upload queue is empty');
+      return;
+    }
+
+    console.log(`📤 Processing ${queue.length} queued uploads...`);
+    
+    for (const item of queue) {
+      try {
+        const formData = new FormData();
+        formData.append('submissionId', item.submissionId);
+        formData.append('dataPointNumber', Date.now());
+        formData.append('data', JSON.stringify({ timestamp: item.timestamp }));
+        formData.append('files', item.blob, `photo_${Date.now()}.jpg`);
+
+        const response = await axios.post(
+          `${API_URL}/submission/upload-data`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+
+        if (response.data.success) {
+          console.log('✅ Queued upload successful:', item.id);
+          
+          // Remove from queue
+          await db.delete('queue', item.id);
+          
+          // Save to photos as uploaded
+          await db.add('photos', {
+            blob: item.blob,
+            timestamp: item.timestamp,
+            uploaded: true
+          });
+        }
+      } catch (error) {
+        console.error('❌ Failed to upload queued item:', item.id, error);
+        // Keep in queue for next sync attempt
+      }
+    }
+    
+    console.log('✅ Queue processing complete');
+    
+    // Reload data if we're on collection screen
+    if (currentSubmission) {
+      loadExistingData();
+    }
+  } catch (error) {
+    console.error('❌ Queue processing error:', error);
+  }
+}
+
+// ========== PWA INSTALL PROMPT ==========
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('💾 PWA install prompt available');
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // Show install button (optional)
+  showInstallButton();
+});
+
+function showInstallButton() {
+  // Create install button if not exists
+  if (document.getElementById('install-button')) return;
+  
+  const installBtn = document.createElement('button');
+  installBtn.id = 'install-button';
+  installBtn.innerHTML = '📱 Install App';
+  installBtn.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    z-index: 9999;
+    transition: transform 0.2s;
+  `;
+  
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    console.log('PWA install outcome:', outcome);
+    
+    if (outcome === 'accepted') {
+      console.log('✅ PWA installed');
+      installBtn.remove();
+    }
+    
+    deferredPrompt = null;
+  });
+  
+  installBtn.addEventListener('mouseenter', () => {
+    installBtn.style.transform = 'scale(1.05)';
+  });
+  
+  installBtn.addEventListener('mouseleave', () => {
+    installBtn.style.transform = 'scale(1)';
+  });
+  
+  document.body.appendChild(installBtn);
+}
+
+window.addEventListener('appinstalled', () => {
+  console.log('✅ PWA successfully installed');
+  deferredPrompt = null;
+  
+  const installBtn = document.getElementById('install-button');
+  if (installBtn) installBtn.remove();
+});
+

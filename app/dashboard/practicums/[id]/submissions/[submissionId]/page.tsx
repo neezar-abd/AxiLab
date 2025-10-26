@@ -214,7 +214,9 @@ export default function SubmissionDetailPage() {
                   : 'Draft'}
               </span>
             </div>
-            <p className="text-gray-600">{submission.practicum.title}</p>
+            <p className="text-gray-600">
+              {submission.practicum?.title || 'Loading practicum...'}
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
