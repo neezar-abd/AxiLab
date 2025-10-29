@@ -267,18 +267,30 @@ export const deletePracticum = async (req, res) => {
     // Check if there are submissions
     const submissionCount = await Submission.countDocuments({ practicumId: req.params.id })
     
-    if (submissionCount > 0) {
+    // Allow force delete with query parameter for development
+    const forceDelete = req.query.force === 'true'
+    
+    if (submissionCount > 0 && !forceDelete) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete practicum with ${submissionCount} existing submissions. Please cancel it instead.`
+        message: `Cannot delete practicum with ${submissionCount} existing submissions. Please cancel it instead, or use force delete.`,
+        submissionCount
       })
+    }
+    
+    // If force delete, remove all submissions first
+    if (forceDelete && submissionCount > 0) {
+      await Submission.deleteMany({ practicumId: req.params.id })
+      console.log(`🗑️ Force deleted ${submissionCount} submissions for practicum ${req.params.id}`)
     }
     
     await practicum.deleteOne()
     
     res.json({
       success: true,
-      message: 'Practicum deleted successfully'
+      message: forceDelete 
+        ? `Practicum and ${submissionCount} submissions deleted successfully` 
+        : 'Practicum deleted successfully'
     })
     
   } catch (error) {

@@ -30,14 +30,21 @@ async function initDB() {
 
 // ========== LOGIN ==========
 window.login = async function() {
+  console.log('🔐 Login function called');
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const statusEl = document.getElementById('login-status');
+
+  console.log('Email:', email);
+  console.log('Password:', password ? '***' : 'empty');
 
   if (!email || !password) {
     showStatus(statusEl, 'Mohon isi email dan password', 'error');
     return;
   }
+
+  console.log('Attempting login to:', `${API_URL}/auth/login`);
+  showStatus(statusEl, 'Menghubungkan ke server...', 'success');
 
   try {
     const response = await axios.post(`${API_URL}/auth/login`, {

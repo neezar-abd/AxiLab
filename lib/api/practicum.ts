@@ -74,8 +74,10 @@ export const practicumApi = {
     return response.data;
   },
 
-  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
-    const response = await axios.delete(`/practicum/${id}`);
+  delete: async (id: string, force: boolean = false): Promise<{ success: boolean; message: string }> => {
+    const response = await axios.delete(`/practicum/${id}`, {
+      params: { force: force.toString() }
+    });
     return response.data;
   },
 

@@ -215,12 +215,12 @@
 
       <div class="input-group">
         <label for="email">Email</label>
-        <input type="email" id="email" placeholder="masukkan email...">
+        <input type="email" id="email" placeholder="masukkan email..." onkeypress="if(event.key === 'Enter') login()">
       </div>
 
       <div class="input-group">
         <label for="password">Password</label>
-        <input type="password" id="password" placeholder="masukkan password...">
+        <input type="password" id="password" placeholder="masukkan password..." onkeypress="if(event.key === 'Enter') login()">
       </div>
 
       <button class="btn btn-primary" onclick="login()">
@@ -238,7 +238,7 @@
 
       <div class="input-group">
         <label for="practicum-code">Kode Praktikum</label>
-        <input type="text" id="practicum-code" placeholder="Masukkan kode praktikum...">
+        <input type="text" id="practicum-code" placeholder="Masukkan kode praktikum..." onkeypress="if(event.key === 'Enter') joinPracticum()">
       </div>
 
       <button class="btn btn-success" onclick="joinPracticum()">

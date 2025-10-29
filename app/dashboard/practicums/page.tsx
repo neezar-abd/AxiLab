@@ -52,18 +52,51 @@ export default function PracticumsPage() {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
+  const handleDelete = async (id: string, title: string, hasSubmissions: boolean, submissionCount: number) => {
+    // First confirmation
     if (!confirm(`Apakah Anda yakin ingin menghapus praktikum "${title}"?`)) {
       return;
     }
 
+    // Second confirmation if has submissions
+    let forceDelete = false;
+    if (hasSubmissions) {
+      const confirmForce = confirm(
+        `⚠️ PERINGATAN!\n\n` +
+        `Praktikum ini memiliki ${submissionCount} submission dari siswa.\n\n` +
+        `Jika Anda menghapus praktikum ini, SEMUA DATA SUBMISSION akan TERHAPUS PERMANEN!\n\n` +
+        `Apakah Anda yakin ingin melanjutkan?`
+      );
+      
+      if (!confirmForce) {
+        return;
+      }
+      
+      forceDelete = true;
+    }
+
     try {
-      await practicumApi.delete(id);
-      toast.success('Praktikum berhasil dihapus');
+      const result = await practicumApi.delete(id, forceDelete);
+      toast.success(result.message || 'Praktikum berhasil dihapus');
       loadPracticums();
     } catch (error: any) {
       console.error('Error deleting practicum:', error);
-      toast.error('Gagal menghapus praktikum');
+      
+      // Show specific error message from backend
+      const errorMessage = error.response?.data?.message || 'Gagal menghapus praktikum';
+      
+      if (error.response?.status === 400) {
+        // Cannot delete practicum with submissions
+        toast.error(errorMessage, {
+          duration: 5000,
+        });
+      } else if (error.response?.status === 403) {
+        toast.error('Anda tidak memiliki akses untuk menghapus praktikum ini');
+      } else if (error.response?.status === 404) {
+        toast.error('Praktikum tidak ditemukan');
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -228,8 +261,18 @@ export default function PracticumsPage() {
                   Edit
                 </Link>
                 <button
-                  onClick={() => handleDelete(practicum._id, practicum.title)}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                  onClick={() => handleDelete(
+                    practicum._id, 
+                    practicum.title,
+                    practicum.totalSubmissions > 0,
+                    practicum.totalSubmissions
+                  )}
+                  title={
+                    practicum.totalSubmissions > 0
+                      ? `Hapus praktikum dan ${practicum.totalSubmissions} submission`
+                      : 'Hapus praktikum'
+                  }
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors text-sm font-medium"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
