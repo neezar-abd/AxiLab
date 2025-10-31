@@ -8,7 +8,9 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "worker": "node src/queues/workers.js",
-    "seed": "node src/utils/seed.js"
+    "seed": "node src/utils/seed.js",
+    "debug": "node scripts/debug-report-system.js",
+    "check-deps": "npm list --depth=0"
   },
   "keywords": [
     "practicum",

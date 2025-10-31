@@ -55,53 +55,181 @@ export const uploadData = async (req, res) => {
       })
     }
     
-    // Process uploaded files (simplified for student app)
-    const fieldData = {}
+    console.log(`📤 Processing upload for submission ${submissionId}, data point ${dataPointNumber}`)
+    console.log(`   Practicum: ${practicum.title}`)
+    console.log(`   Fields defined: ${practicum.fields.length}`)
+    console.log(`   Files uploaded: ${req.files?.length || 0}`)
+    
+    // NEW: Array untuk store field data dengan proper mapping
+    const fieldsData = []
     const aiAnalysisJobs = []
     
-    // Handle uploaded files
+    // NEW: Handle uploaded files dengan field mapping
     if (req.files && req.files.length > 0) {
+      console.log(`   Processing ${req.files.length} file(s)...`)
+      
       for (const file of req.files) {
-        const bucket = process.env.MINIO_BUCKET_PHOTOS || 'photos'
+        // Get field name from file.fieldname (dari multer)
+        const fieldName = file.fieldname
+        
+        // Find practicum field definition
+        const practField = practicum.fields.find(f => f.name === fieldName)
+        
+        if (!practField) {
+          console.warn(`   ⚠️  File uploaded for unknown field: ${fieldName}, skipping...`)
+          continue
+        }
+        
+        console.log(`   📁 Processing field: ${practField.label} (${practField.type})`)
+        
+        // Determine bucket based on field type
+        const bucket = practField.type === 'video' 
+          ? (process.env.MINIO_BUCKET_VIDEOS || 'videos')
+          : (process.env.MINIO_BUCKET_PHOTOS || 'photos')
+        
         const prefix = `${submissionId}/data${dataPointNumber}/`
         
+        // Upload to MinIO
         const uploadResult = await minioService.uploadFile(file, bucket, prefix)
+        console.log(`   ✅ Uploaded: ${uploadResult.filename} (${(uploadResult.size / 1024).toFixed(2)} KB)`)
         
-        // Store file info
-        fieldData.fileUrl = uploadResult.url
-        fieldData.filename = uploadResult.filename
-        fieldData.size = uploadResult.size
-        fieldData.mimeType = uploadResult.mimeType
-        fieldData.originalName = uploadResult.originalName
+        // Create field data object
+        const fieldData = {
+          fieldName: practField.name,
+          fieldLabel: practField.label,
+          fieldType: practField.type,
+          fileUrl: uploadResult.url,
+          fileName: uploadResult.filename,
+          fileSize: uploadResult.size,
+          mimeType: uploadResult.mimeType,
+          aiStatus: practField.aiEnabled ? 'pending' : 'not_applicable',
+          uploadedAt: new Date()
+        }
         
-        // Queue AI analysis for images
-        const imageField = practicum.fields.find(f => f.type === 'image' && f.aiEnabled)
-        if (imageField && file.mimetype.startsWith('image/')) {
+        fieldsData.push(fieldData)
+        
+        // Queue AI analysis if enabled
+        if (practField.aiEnabled) {
+          console.log(`   🤖 Queueing AI analysis for ${practField.label}`)
           aiAnalysisJobs.push({
             submissionId,
             dataPointNumber,
             fileUrl: uploadResult.url,
-            fieldName: imageField.name,
-            aiPrompt: imageField.aiPrompt
+            fieldName: practField.name,
+            aiPrompt: practField.aiPrompt || `Analisis ${practField.label} ini dengan detail`
           })
         }
       }
     }
     
-    // Add any additional data from body
-    if (req.body.data) {
+    // NEW: Handle text, number, select fields dari request body
+    practicum.fields.forEach(practField => {
+      // Skip if this is a file field (already processed above)
+      if (practField.type === 'image' || practField.type === 'video') {
+        // Check if already processed
+        if (fieldsData.find(f => f.fieldName === practField.name)) {
+          return // Already added from file upload
+        }
+      }
+      
+      // Get value from body dengan format: field_{fieldName}
+      const bodyKey = `field_${practField.name}`
+      const value = req.body[bodyKey]
+      
+      if (value !== undefined && value !== null && value !== '') {
+        console.log(`   📝 Adding ${practField.type} field: ${practField.label} = ${value}`)
+        
+        fieldsData.push({
+          fieldName: practField.name,
+          fieldLabel: practField.label,
+          fieldType: practField.type,
+          value: practField.type === 'number' ? parseFloat(value) : value,
+          aiStatus: 'not_applicable',
+          uploadedAt: new Date()
+        })
+      }
+    })
+    
+    // NEW: Parse fieldsData dari body jika ada (untuk complex data)
+    if (req.body.fieldsData) {
       try {
-        const parsedData = typeof req.body.data === 'string' 
-          ? JSON.parse(req.body.data) 
-          : req.body.data
-        Object.assign(fieldData, parsedData)
+        const additionalFields = typeof req.body.fieldsData === 'string' 
+          ? JSON.parse(req.body.fieldsData) 
+          : req.body.fieldsData
+        
+        if (Array.isArray(additionalFields)) {
+          additionalFields.forEach(field => {
+            // Check if not already added
+            if (!fieldsData.find(f => f.fieldName === field.fieldName)) {
+              fieldsData.push(field)
+              console.log(`   📦 Added field from fieldsData: ${field.fieldName}`)
+            }
+          })
+        }
       } catch (e) {
-        // Ignore parse errors
+        console.warn('   ⚠️  Failed to parse fieldsData:', e.message)
       }
     }
     
-    // Add/update data point
-    await submission.addDataPoint(parseInt(dataPointNumber), fieldData)
+    console.log(`   Total fields to save: ${fieldsData.length}`)
+    
+    // Fallback: OLD FORMAT for backward compatibility
+    // Jika tidak ada fieldsData (old student app), gunakan format lama
+    if (fieldsData.length === 0 && req.files && req.files.length > 0) {
+      console.log(`   ⚠️  Using legacy format (no field mapping)`)
+      const file = req.files[0]
+      const bucket = process.env.MINIO_BUCKET_PHOTOS || 'photos'
+      const prefix = `${submissionId}/data${dataPointNumber}/`
+      const uploadResult = await minioService.uploadFile(file, bucket, prefix)
+      
+      // Use old format
+      const legacyData = {
+        fileUrl: uploadResult.url,
+        filename: uploadResult.filename,
+        size: uploadResult.size,
+        mimeType: uploadResult.mimeType,
+        originalName: uploadResult.originalName
+      }
+      
+      // Queue AI for first image field with aiEnabled
+      const imageField = practicum.fields.find(f => f.type === 'image' && f.aiEnabled)
+      if (imageField && file.mimetype.startsWith('image/')) {
+        aiAnalysisJobs.push({
+          submissionId,
+          dataPointNumber,
+          fileUrl: uploadResult.url,
+          fieldName: imageField.name,
+          aiPrompt: imageField.aiPrompt
+        })
+      }
+      
+      // Save dengan old format
+      await submission.addDataPoint(parseInt(dataPointNumber), legacyData)
+      
+      // Enqueue AI
+      for (const job of aiAnalysisJobs) {
+        await enqueueAIAnalysis(
+          job.submissionId,
+          job.dataPointNumber,
+          job.fieldName,
+          job.fileUrl,
+          job.aiPrompt
+        )
+      }
+      
+      const updatedSubmission = await Submission.findById(submissionId)
+      const dataPoint = updatedSubmission.data.find(d => d.number === parseInt(dataPointNumber))
+      
+      return res.json({
+        success: true,
+        message: 'Data uploaded successfully (legacy format)',
+        dataPoint
+      })
+    }
+    
+    // Add/update data point dengan NEW format
+    console.log(`   💾 Saving data point with ${fieldsData.length} fields...`)
+    await submission.addDataPoint(parseInt(dataPointNumber), fieldsData)
     
     // Enqueue AI analysis jobs
     for (const job of aiAnalysisJobs) {
@@ -118,13 +246,24 @@ export const uploadData = async (req, res) => {
     const updatedSubmission = await Submission.findById(submissionId)
     const dataPoint = updatedSubmission.data.find(d => d.number === parseInt(dataPointNumber))
     
-    // Emit socket event to teacher
+    console.log(`   ✅ Upload completed successfully!`)
+    
+    // Emit socket event to student (for auto-refresh)
     const io = req.app.get('io')
     if (io) {
+      // Emit ke room submission untuk student
+      io.emitToSubmission(submissionId, 'data-uploaded', {
+        dataPointNumber: parseInt(dataPointNumber),
+        fieldsCount: fieldsData.length,
+        timestamp: new Date()
+      })
+      
+      // Emit ke room practicum untuk teacher
       io.emitToPracticum(practicum._id.toString(), 'data-uploaded', {
         submissionId: submission._id.toString(),
         studentName: submission.studentName,
         dataPointNumber: parseInt(dataPointNumber),
+        fieldsCount: fieldsData.length,
         timestamp: new Date()
       })
     }
@@ -132,7 +271,8 @@ export const uploadData = async (req, res) => {
     res.json({
       success: true,
       message: 'Data uploaded successfully',
-      dataPoint
+      dataPoint,
+      fieldsCount: fieldsData.length
     })
     
   } catch (error) {
@@ -174,9 +314,13 @@ export const getSubmissionDetail = async (req, res) => {
       })
     }
     
+    // NEW: Add field completion stats
+    const completionStats = submission.getFieldCompletionStats(submission.practicumId)
+    
     res.json({
       success: true,
-      data: submission
+      data: submission,
+      completionStats
     })
     
   } catch (error) {
@@ -347,8 +491,27 @@ export const submitSubmission = async (req, res) => {
       })
     }
     
+    // NEW: Validate required fields
+    const validation = submission.validateRequiredFields(practicum)
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Some required fields are missing',
+        missingFields: validation.missingFields
+      })
+    }
+    
     // Check if all AI analysis completed or failed
-    const pendingAI = submission.data.some(d => d.aiStatus === 'processing')
+    const pendingAI = submission.data.some(d => {
+      // Check old format
+      if (d.aiStatus === 'processing') return true
+      // Check new format
+      if (d.fields) {
+        return d.fields.some(f => f.aiStatus === 'processing')
+      }
+      return false
+    })
+    
     if (pendingAI) {
       return res.status(400).json({
         success: false,
@@ -504,6 +667,83 @@ export const getMySubmissions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get submissions',
+      error: error.message
+    })
+  }
+}
+
+/**
+ * @route   GET /api/submission/:id/validate
+ * @desc    Validate submission readiness (check required fields)
+ * @access  Private (Student)
+ */
+export const validateSubmission = async (req, res) => {
+  try {
+    const submission = await Submission.findById(req.params.id)
+      .populate('practicumId')
+    
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: 'Submission not found'
+      })
+    }
+    
+    // Check ownership
+    if (submission.studentId.toString() !== req.userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      })
+    }
+    
+    const practicum = submission.practicumId
+    
+    // Check minimum data points
+    const hasMinDataPoints = submission.data.length >= practicum.minDataPoints
+    
+    // Validate required fields
+    const requiredFieldsValidation = submission.validateRequiredFields(practicum)
+    
+    // Check AI processing status
+    const pendingAI = submission.data.some(d => {
+      if (d.aiStatus === 'processing') return true
+      if (d.fields) {
+        return d.fields.some(f => f.aiStatus === 'processing')
+      }
+      return false
+    })
+    
+    // Get completion stats
+    const completionStats = submission.getFieldCompletionStats(practicum)
+    
+    const canSubmit = hasMinDataPoints && 
+                      requiredFieldsValidation.valid && 
+                      !pendingAI
+    
+    res.json({
+      success: true,
+      canSubmit,
+      validation: {
+        minDataPoints: {
+          required: practicum.minDataPoints,
+          current: submission.data.length,
+          valid: hasMinDataPoints
+        },
+        requiredFields: requiredFieldsValidation,
+        aiProcessing: {
+          hasPending: pendingAI,
+          valid: !pendingAI
+        },
+        completion: completionStats
+      }
+    })
+    
+  } catch (error) {
+    console.error('Validate submission error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to validate submission',
       error: error.message
     })
   }

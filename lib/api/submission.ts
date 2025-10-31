@@ -1,6 +1,27 @@
 import axios from './axios';
 
+export interface FieldData {
+  fieldName: string;
+  fieldLabel?: string;
+  fieldType: 'image' | 'video' | 'text' | 'number' | 'select';
+  value?: any;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  aiStatus?: 'pending' | 'processing' | 'completed' | 'failed' | 'not_applicable';
+  aiAnalysis?: any;
+  aiError?: string;
+  uploadedAt: string;
+}
+
 export interface DataPoint {
+  number: number;
+  fields: FieldData[];
+  uploadedAt: string;
+}
+
+// Legacy format (for backward compatibility)
+export interface LegacyDataPoint {
   fieldName: string;
   value: string | number;
   fileUrl?: string;
@@ -29,7 +50,10 @@ export interface Submission {
   };
   studentName?: string; // Fallback if student not populated
   studentClass?: string; // Fallback if student not populated
-  dataPoints?: DataPoint[];
+  // New nested structure
+  data?: DataPoint[];
+  // Legacy flat structure (for backward compatibility)
+  dataPoints?: LegacyDataPoint[];
   status: 'draft' | 'submitted' | 'graded';
   score?: number;
   feedback?: string;
@@ -68,7 +92,7 @@ export const submissionApi = {
   update: async (
     practicumId: string,
     submissionId: string,
-    data: { dataPoints: DataPoint[] }
+    data: { dataPoints: LegacyDataPoint[] }
   ): Promise<{ success: boolean; data: Submission }> => {
     const response = await axios.put(`/submission/${submissionId}`, data);
     return response.data;

@@ -1,14 +1,14 @@
+// Load environment variables BEFORE anything else
+import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import { createServer } from 'http'
-import dotenv from 'dotenv'
 import connectDB from './config/database.js'
 import { setupSocketIO } from './config/socket.js'
 import { setupAIWorker } from './queues/aiAnalysisQueue.js'
 import errorMiddleware from './middlewares/error.middleware.js'
 
-// Load environment variables
-dotenv.config()
+// dotenv is already initialized via 'dotenv/config'
 
 const app = express()
 const httpServer = createServer(app)
@@ -21,10 +21,19 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001'
   ],
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['Content-Disposition'] // Allow file download headers
 }))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Increase timeout for report generation routes (5 minutes)
+app.use('/api/report/generate-bulk', (req, res, next) => {
+  req.setTimeout(300000) // 5 minutes
+  res.setTimeout(300000)
+  console.log('⏱️  Extended timeout set for bulk report generation')
+  next()
+})
 
 // Request logging middleware
 app.use((req, res, next) => {

@@ -4,6 +4,7 @@ import geminiService from '../services/geminiService.js'
 import minioService from '../services/minioService.js'
 import Submission from '../models/Submission.js'
 import Practicum from '../models/Practicum.js'
+import { formatAIAnalysis } from '../utils/aiFormatter.js'
 
 // Create queue
 export const aiAnalysisQueue = new Queue('ai-analysis', {
@@ -16,9 +17,16 @@ export const aiAnalysisQueue = new Queue('ai-analysis', {
 export async function enqueueAIAnalysis(submissionId, dataPointNumber, fieldName, fileUrl, aiPrompt) {
   try {
     // Extract bucket and filename from URL
-    const urlParts = fileUrl.split('/')
-    const filename = urlParts[urlParts.length - 1]
-    const bucket = urlParts.includes('photos') ? process.env.MINIO_BUCKET_PHOTOS : process.env.MINIO_BUCKET_VIDEOS
+    // URL format: http://localhost:9000/bucket-name/path/to/filename.jpg
+    const url = new URL(fileUrl)
+    const pathParts = url.pathname.split('/').filter(p => p) // Remove empty parts
+    
+    // First part is bucket, rest is the filename/path
+    const bucketName = pathParts[0]
+    const filename = pathParts.slice(1).join('/')
+    
+    // Use the extracted bucket name directly
+    const bucket = bucketName || process.env.MINIO_BUCKET_PHOTOS
     
     const job = await aiAnalysisQueue.add(
       'analyze-image',
@@ -65,8 +73,13 @@ export function setupAIWorker(io) {
     async (job) => {
       const { submissionId, dataPointNumber, fieldName, bucket, filename, mimeType, aiPrompt } = job.data
       
+      // CRITICAL FIX: Parse dataPointNumber ke INTEGER
+      const numericDataPointNumber = typeof dataPointNumber === 'string' 
+        ? parseInt(dataPointNumber, 10) 
+        : dataPointNumber
+      
       console.log(`\n🤖 [AI Worker] Processing submission ${submissionId}`)
-      console.log(`   📊 Data point: #${dataPointNumber}`)
+      console.log(`   📊 Data point: #${numericDataPointNumber} (type: ${typeof numericDataPointNumber})`)
       console.log(`   📷 Field: ${fieldName}`)
       console.log(`   🗂️  File: ${bucket}/${filename}`)
       
@@ -75,7 +88,7 @@ export function setupAIWorker(io) {
         await Submission.updateOne(
           {
             _id: submissionId,
-            'data.number': dataPointNumber
+            'data.number': numericDataPointNumber  // ✅ Use numeric version
           },
           {
             $set: {
@@ -89,13 +102,15 @@ export function setupAIWorker(io) {
         // Emit event ke frontend
         if (io) {
           io.emitToSubmission(submissionId, 'ai-status-update', {
-            dataPointNumber,
+            dataPointNumber: numericDataPointNumber,
+            fieldName,
             status: 'processing'
           })
         }
         
         // Download file dari MinIO
         console.log(`   📥 Downloading file from MinIO...`)
+        console.log(`   🔍 Looking for: bucket="${bucket}", filename="${filename}"`)
         const fileBuffer = await minioService.downloadFile(bucket, filename)
         console.log(`   ✅ File downloaded (${(fileBuffer.length / 1024).toFixed(2)} KB)`)
         
@@ -104,79 +119,127 @@ export function setupAIWorker(io) {
         const analysisResult = await geminiService.analyzeImage(fileBuffer, aiPrompt, mimeType)
         console.log(`   ✅ AI analysis completed`)
         
-        // Save hasil ke database
-        const submission = await Submission.findOneAndUpdate(
-          {
-            _id: submissionId,
-            'data.number': dataPointNumber
-          },
-          {
-            $set: {
-              'data.$.aiAnalysis': analysisResult,
-              'data.$.aiStatus': 'completed',
-              'data.$.aiProcessedAt': new Date()
-            }
-          },
-          { new: true }
-        ).populate('practicumId', '_id title')
+        // Format AI result - clean markdown formatting
+        const formattedAnalysis = formatAIAnalysis(analysisResult)
+        console.log(`   🎨 AI result formatted (${analysisResult.rawText?.length || 0} → ${formattedAnalysis.displayText?.length || 0} chars)`)
         
-        console.log(`   💾 AI result saved to database`)
+        // Save hasil ke database dengan field-specific method
+        const submission = await Submission.findById(submissionId)
+        
+        if (submission) {
+          // Try NEW method first (field-based)
+          const dataPoint = submission.data.find(d => d.number === numericDataPointNumber)
+          console.log(`   🔍 DataPoint found:`, !!dataPoint)
+          
+          if (dataPoint && dataPoint.fields) {
+            console.log(`   🔍 DataPoint has ${dataPoint.fields.length} fields`)
+            console.log(`   🔍 Field names:`, dataPoint.fields.map(f => f.fieldName).join(', '))
+          }
+          
+          console.log(`   📝 Before save - looking for field: ${fieldName}`)
+          
+          const saveResult = await submission.updateFieldAIAnalysis(numericDataPointNumber, fieldName, formattedAnalysis)
+          console.log(`   💾 AI result saved to field: ${fieldName}`)
+          
+          // Verify save
+          const verifySubmission = await Submission.findById(submissionId)
+          const verifyDataPoint = verifySubmission.data.find(d => d.number === numericDataPointNumber)
+          const verifyField = verifyDataPoint?.fields?.find(f => f.fieldName === fieldName)
+          console.log(`   ✅ Verified - field found: ${!!verifyField}, aiStatus: ${verifyField?.aiStatus}, hasAnalysis: ${!!verifyField?.aiAnalysis}`)
+        } else {
+          console.warn(`   ⚠️  Submission not found: ${submissionId}`)
+        }
+        
+        // Get updated submission with practicum data
+        const updatedSubmission = await Submission.findById(submissionId)
+          .populate('practicumId', '_id title')
+        
+        if (!updatedSubmission) {
+          throw new Error('Submission not found after update')
+        }
+        
+        console.log(`   💾 AI result saved successfully`)
         
         // Emit success event
-        if (io && submission) {
-          const dataPoint = submission.data.find(d => d.number === dataPointNumber)
+        if (io) {
+          // Find the specific field to get complete data
+          const dataPoint = updatedSubmission.data.find(d => d.number === numericDataPointNumber)
+          const field = dataPoint?.fields?.find(f => f.fieldName === fieldName)
           
+          console.log(`   📡 Emitting Socket.io event: ai-analysis-complete`)
+          console.log(`   📡 To submission room: submission_${submissionId}`)
+          console.log(`   📡 Event data: dataPointNumber=${numericDataPointNumber}, fieldName=${fieldName}`)
+          
+          // Emit ke submission room (untuk student)
           io.emitToSubmission(submissionId, 'ai-analysis-complete', {
-            dataPointNumber,
-            analysis: analysisResult,
-            status: 'completed'
-          })
-          
-          // Emit ke practicum room (untuk guru)
-          io.emitToPracticum(submission.practicumId._id.toString(), 'ai-analysis-complete', {
-            submissionId: submissionId.toString(),
-            studentName: submission.studentName,
-            dataPointNumber,
+            dataPointNumber: numericDataPointNumber,
             fieldName,
-            analysis: analysisResult,
+            analysis: formattedAnalysis, // Send formatted version
+            status: 'completed',
             timestamp: new Date()
           })
           
-          console.log(`   📡 Socket.io events emitted`)
+          // Emit ke practicum room (untuk guru)
+          io.emitToPracticum(updatedSubmission.practicumId._id.toString(), 'ai-analysis-complete', {
+            submissionId: submissionId.toString(),
+            studentName: updatedSubmission.studentName,
+            dataPointNumber: numericDataPointNumber,
+            fieldName,
+            analysis: formattedAnalysis, // Send formatted version
+            timestamp: new Date()
+          })
+          
+          console.log(`   📡 Socket.io events emitted successfully`)
         }
         
         console.log(`   ✅ AI Analysis completed successfully!\n`)
         
         return { 
           success: true, 
-          analysis: analysisResult,
+          analysis: formattedAnalysis, // Return formatted version
           submissionId,
-          dataPointNumber,
+          dataPointNumber: numericDataPointNumber,
           fieldName
         }
         
       } catch (error) {
         console.error(`   ❌ AI analysis failed:`, error.message)
         
-        // Update status ke failed
-        await Submission.updateOne(
-          {
-            _id: submissionId,
-            'data.number': dataPointNumber
-          },
-          {
-            $set: {
-              'data.$.aiStatus': 'failed',
-              'data.$.aiError': error.message,
-              'data.$.aiProcessedAt': new Date()
+        // Update status ke failed - use field-specific method
+        const submission = await Submission.findById(submissionId)
+        if (submission) {
+          const dataPoint = submission.data.find(d => d.number === numericDataPointNumber)
+          if (dataPoint && dataPoint.fields) {
+            const field = dataPoint.fields.find(f => f.fieldName === fieldName)
+            if (field) {
+              field.aiStatus = 'failed'
+              field.aiError = error.message
+              field.aiProcessedAt = new Date()
+              await submission.save()
             }
+          } else {
+            // Fallback to old method
+            await Submission.updateOne(
+              {
+                _id: submissionId,
+                'data.number': numericDataPointNumber
+              },
+              {
+                $set: {
+                  'data.$.aiStatus': 'failed',
+                  'data.$.aiError': error.message,
+                  'data.$.aiProcessedAt': new Date()
+                }
+              }
+            )
           }
-        )
+        }
         
         // Emit error event
         if (io) {
           io.emitToSubmission(submissionId, 'ai-analysis-failed', {
-            dataPointNumber,
+            dataPointNumber: numericDataPointNumber,
+            fieldName,
             error: error.message
           })
         }

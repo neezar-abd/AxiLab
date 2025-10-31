@@ -23,6 +23,215 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+/**
+ * Parse AI analysis result
+ * Handles both string JSON and object formats
+ */
+const parseAIAnalysis = (analysis: any) => {
+  if (!analysis) return null;
+
+  // If already object with expected structure
+  if (typeof analysis === 'object' && !analysis.text) {
+    return analysis;
+  }
+
+  // If wrapped in { text: "..." }
+  if (typeof analysis === 'object' && analysis.text) {
+    try {
+      return JSON.parse(analysis.text);
+    } catch {
+      return { rawText: analysis.text };
+    }
+  }
+
+  // If string JSON
+  if (typeof analysis === 'string') {
+    try {
+      // Try direct parse first
+      const parsed = JSON.parse(analysis);
+      
+      // Check if parsed result has "text" wrapper (double-encoded JSON)
+      if (parsed.text && typeof parsed.text === 'string') {
+        try {
+          const innerParsed = JSON.parse(parsed.text);
+          return innerParsed;
+        } catch {
+          return { rawText: parsed.text };
+        }
+      }
+      
+      return parsed;
+    } catch {
+      // Not JSON, return as raw text
+      return { rawText: analysis };
+    }
+  }
+
+  return { rawText: String(analysis) };
+};
+
+interface AIAnalysisDisplayProps {
+  analysis: any;
+  status: string;
+  error?: string;
+}
+
+const AIAnalysisDisplay = ({ analysis, status, error }: AIAnalysisDisplayProps) => {
+  if (status === 'processing') {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-yellow-600" />
+          <span className="text-sm text-yellow-700">Sedang dianalisis AI...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'pending') {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-gray-600" />
+          <span className="text-sm text-gray-600">Menunggu analisis...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'failed') {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-red-700">❌ Gagal: {error || 'Terjadi kesalahan'}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (status !== 'completed' || !analysis) {
+    return null;
+  }
+
+  const parsed = parseAIAnalysis(analysis);
+
+  return (
+    <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-5 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-purple-200">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
+          <Sparkles className="w-5 h-5 text-white" />
+        </div>
+        <h4 className="font-bold text-lg text-gray-900">Hasil Analisis AI</h4>
+      </div>
+
+      {/* Structured Data */}
+      {parsed.scientificName || parsed.commonName || parsed.classification ? (
+        <div className="space-y-3">
+          {/* Scientific Name */}
+          {parsed.scientificName && (
+            <div className="bg-white/80 rounded-lg p-3 border border-purple-100 hover:border-purple-200 transition-colors">
+              <p className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">
+                Nama Ilmiah
+              </p>
+              <p className="text-base font-medium text-gray-900 italic">
+                {parsed.scientificName}
+              </p>
+            </div>
+          )}
+
+          {/* Common Name */}
+          {parsed.commonName && (
+            <div className="bg-white/80 rounded-lg p-3 border border-blue-100 hover:border-blue-200 transition-colors">
+              <p className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wide">
+                Nama Umum
+              </p>
+              <p className="text-base font-medium text-gray-900">{parsed.commonName}</p>
+            </div>
+          )}
+
+          {/* Classification */}
+          {parsed.classification && (
+            <div className="bg-white/80 rounded-lg p-3 border border-green-100 hover:border-green-200 transition-colors">
+              <p className="text-xs font-semibold text-green-600 mb-1 uppercase tracking-wide">
+                Klasifikasi
+              </p>
+              <p className="text-base font-medium text-gray-900 capitalize">
+                {parsed.classification}
+              </p>
+            </div>
+          )}
+
+          {/* Confidence Score */}
+          {parsed.confidence !== undefined && parsed.confidence !== null && (
+            <div className="bg-white/80 rounded-lg p-3 border border-orange-100 hover:border-orange-200 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide">
+                  Tingkat Kepercayaan
+                </p>
+                <span className="text-lg font-bold text-orange-600">{parsed.confidence}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-500 shadow-sm"
+                  style={{ width: `${Math.min(100, Math.max(0, parsed.confidence))}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Characteristics */}
+          {parsed.characteristics && Array.isArray(parsed.characteristics) && parsed.characteristics.length > 0 && (
+            <div className="bg-white/80 rounded-lg p-4 border border-indigo-100 hover:border-indigo-200 transition-colors">
+              <p className="text-xs font-semibold text-indigo-600 mb-3 uppercase tracking-wide">
+                Ciri-ciri Khas
+              </p>
+              <ul className="space-y-2">
+                {parsed.characteristics.map((char: string, idx: number) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                    <span className="text-indigo-500 font-bold mt-0.5 text-lg">•</span>
+                    <span className="flex-1">{char}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Additional Info */}
+          {parsed.additionalInfo && (
+            <div className="bg-white/80 rounded-lg p-3 border border-gray-100 hover:border-gray-200 transition-colors">
+              <p className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
+                Informasi Tambahan
+              </p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{parsed.additionalInfo}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Raw Text Fallback */
+        <div className="bg-white/80 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors">
+          <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+            Hasil Analisis
+          </p>
+          <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+            {parsed.rawText || JSON.stringify(parsed, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {/* AI Badge */}
+      <div className="mt-4 pt-3 border-t border-purple-200">
+        <div className="flex items-center justify-center gap-2">
+          <Sparkles className="w-3 h-3 text-purple-500" />
+          <p className="text-xs text-gray-500 text-center">
+            Powered by Gemini AI • Analyzed automatically
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function SubmissionDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -42,6 +251,17 @@ export default function SubmissionDetailPage() {
   useEffect(() => {
     loadSubmission();
   }, [practicumId, submissionId]);
+
+  useEffect(() => {
+    if (submission) {
+      console.log('📊 Submission data structure:', {
+        hasData: !!submission.data,
+        dataLength: submission.data?.length || 0,
+        firstDataPoint: submission.data?.[0],
+        firstField: submission.data?.[0]?.fields?.[0]
+      });
+    }
+  }, [submission]);
 
   const loadSubmission = async () => {
     try {
@@ -115,47 +335,50 @@ export default function SubmissionDetailPage() {
   };
 
   const getFieldIcon = (type: string) => {
+    const iconClass = 'w-5 h-5';
+
     switch (type) {
       case 'image':
-        return <ImageIcon className="w-5 h-5 text-blue-600" />;
+        return <ImageIcon className={`${iconClass} text-blue-600`} />;
       case 'video':
-        return <Video className="w-5 h-5 text-purple-600" />;
+        return <Video className={`${iconClass} text-purple-600`} />;
       case 'text':
-        return <Type className="w-5 h-5 text-gray-600" />;
+        return <Type className={`${iconClass} text-gray-600`} />;
       case 'number':
-        return <FileText className="w-5 h-5 text-green-600" />;
+        return <FileText className={`${iconClass} text-green-600`} />;
       case 'select':
-        return <List className="w-5 h-5 text-orange-600" />;
+        return <List className={`${iconClass} text-orange-600`} />;
       default:
-        return <FileText className="w-5 h-5 text-gray-600" />;
+        return <FileText className={`${iconClass} text-gray-600`} />;
     }
   };
 
   const getAIStatusBadge = (status?: string) => {
-    if (!status) return null;
+    if (!status || status === 'not_applicable') return null;
 
     const badges = {
       pending: (
-        <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-          <Clock className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1.5 text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full font-medium border border-gray-300">
+          <Clock className="w-3.5 h-3.5" />
           Menunggu
         </span>
       ),
       processing: (
-        <span className="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-          <Loader2 className="w-3 h-3 animate-spin" />
-          Diproses
+        <span className="inline-flex items-center gap-1.5 text-xs bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-full font-medium border border-yellow-300 animate-pulse">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Diproses AI
         </span>
       ),
       completed: (
-        <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-          <Sparkles className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1.5 text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-3 py-1.5 rounded-full font-medium border border-green-300 shadow-sm">
+          <Sparkles className="w-3.5 h-3.5" />
           Selesai
         </span>
       ),
       failed: (
-        <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-          ✖ Gagal
+        <span className="inline-flex items-center gap-1.5 text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-full font-medium border border-red-300">
+          <span className="text-sm">✖</span>
+          Gagal
         </span>
       ),
     };
@@ -318,84 +541,147 @@ export default function SubmissionDetailPage() {
       )}
 
       {/* Data Points */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Data yang Dikumpulkan ({submission.dataPoints?.length || 0})
-        </h2>
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <FileText className="w-6 h-6" />
+            Data yang Dikumpulkan (
+            {submission.data?.reduce((acc, dp) => acc + (dp.fields?.length || 0), 0) || 0})
+          </h2>
+        </div>
 
-        <div className="space-y-4">
-          {submission.dataPoints && submission.dataPoints.length > 0 ? (
-            submission.dataPoints.map((dataPoint, index) => (
-            <div
-              key={index}
-              className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  {getFieldIcon(dataPoint.fieldName)}
-                  <h3 className="font-medium text-gray-900">{dataPoint.fieldName}</h3>
-                </div>
-                <span className="text-xs text-gray-500">
-                  {new Date(dataPoint.timestamp).toLocaleString('id-ID')}
-                </span>
-              </div>
-
-              {/* Value */}
-              {dataPoint.fileUrl ? (
-                <div className="mb-3">
-                  {dataPoint.fieldName.toLowerCase().includes('foto') ||
-                  dataPoint.fieldName.toLowerCase().includes('gambar') ||
-                  dataPoint.fieldName.toLowerCase().includes('image') ? (
-                    <img
-                      src={dataPoint.fileUrl}
-                      alt={dataPoint.fieldName}
-                      className="max-w-md rounded-lg border border-gray-200"
-                    />
-                  ) : (
-                    <a
-                      href={dataPoint.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      Lihat File
-                    </a>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-900 mb-3">{dataPoint.value}</p>
-              )}
-
-              {/* AI Analysis */}
-              {dataPoint.aiAnalysis && (
-                <div className="bg-linear-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-purple-600" />
-                    <span className="font-medium text-purple-900">Analisis AI</span>
-                    {getAIStatusBadge(dataPoint.aiAnalysis.status)}
+        <div className="p-6 space-y-8">
+          {submission.data && submission.data.length > 0 ? (
+            submission.data.map((dataPoint, dpIndex) => (
+              <div key={dpIndex} className="space-y-4">
+                {/* Data Point Header - Enhanced */}
+                <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-200">
+                  <div className="bg-blue-100 rounded-full p-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
                   </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-gray-900">
+                      Data Point #{dataPoint.number}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {new Date(dataPoint.uploadedAt).toLocaleDateString('id-ID', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
 
-                  {dataPoint.aiAnalysis.status === 'completed' && dataPoint.aiAnalysis.result ? (
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {dataPoint.aiAnalysis.result}
-                    </p>
-                  ) : dataPoint.aiAnalysis.status === 'failed' ? (
-                    <p className="text-sm text-red-600">
-                      Gagal: {dataPoint.aiAnalysis.error || 'Terjadi kesalahan'}
-                    </p>
-                  ) : dataPoint.aiAnalysis.status === 'processing' ? (
-                    <p className="text-sm text-gray-600">Sedang diproses oleh AI...</p>
+                {/* Fields - Enhanced Cards */}
+                <div className="grid gap-4">
+                  {dataPoint.fields && dataPoint.fields.length > 0 ? (
+                    dataPoint.fields.map((field, fieldIndex) => (
+                      <div
+                        key={fieldIndex}
+                        className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                      >
+                        {/* Field Header */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-white p-2 rounded-lg shadow-sm">
+                              {getFieldIcon(field.fieldType)}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {field.fieldLabel || field.fieldName}
+                              </h4>
+                              <p className="text-xs text-gray-500 capitalize">
+                                {field.fieldType} field
+                              </p>
+                            </div>
+                          </div>
+                          {getAIStatusBadge(field.aiStatus)}
+                        </div>
+
+                        {/* Field Content */}
+                        <div className="space-y-4">
+                          {/* Image with Lightbox Effect */}
+                          {field.fieldType === 'image' && field.fileUrl && (
+                            <div className="group relative">
+                              <img
+                                src={field.fileUrl}
+                                alt={field.fieldLabel || field.fieldName}
+                                className="w-full max-w-2xl rounded-lg border-2 border-gray-300 shadow-md cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                                onClick={() => window.open(field.fileUrl, '_blank')}
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition-all duration-300 pointer-events-none" />
+                              {field.fileName && (
+                                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                  <ImageIcon className="w-4 h-4" />
+                                  <span>{field.fileName}</span>
+                                  {field.fileSize && (
+                                    <span>• {(field.fileSize / 1024).toFixed(2)} KB</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Video */}
+                          {field.fieldType === 'video' && field.fileUrl && (
+                            <div>
+                              <video
+                                src={field.fileUrl}
+                                controls
+                                className="w-full max-w-2xl rounded-lg border-2 border-gray-300 shadow-md"
+                              />
+                              {field.fileName && (
+                                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                  <Video className="w-4 h-4" />
+                                  <span>{field.fileName}</span>
+                                  {field.fileSize && (
+                                    <span>• {(field.fileSize / 1024).toFixed(2)} KB</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Text/Number/Select - Enhanced */}
+                          {(field.fieldType === 'text' ||
+                            field.fieldType === 'number' ||
+                            field.fieldType === 'select') && (
+                            <div className="bg-white rounded-lg p-4 border border-gray-200">
+                              <p className="text-gray-900 text-base leading-relaxed">
+                                {field.value}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* AI Analysis - Use New Component */}
+                          {field.aiStatus && field.aiStatus !== 'not_applicable' && (
+                            <AIAnalysisDisplay
+                              analysis={field.aiAnalysis}
+                              status={field.aiStatus}
+                              error={field.aiError}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))
                   ) : (
-                    <p className="text-sm text-gray-500">Menunggu diproses...</p>
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      Tidak ada field dalam data point ini
+                    </p>
                   )}
                 </div>
-              )}
-            </div>
-          ))
+              </div>
+            ))
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Belum ada data yang dikumpulkan</p>
+            <div className="text-center py-12 text-gray-500">
+              <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">Belum ada data yang dikumpulkan</p>
+              <p className="text-sm mt-2">Siswa belum mengupload data praktikum</p>
             </div>
           )}
         </div>

@@ -125,31 +125,35 @@ export const generateBulkReports = async (req, res) => {
     let successCount = 0
     let failCount = 0
     
+    console.log(`📦 Starting bulk PDF generation for ${submissions.length} submissions...`)
+    
     for (const submission of submissions) {
       try {
-        console.log(`Generating report for ${submission.studentName}...`)
+        console.log(`📄 Generating report ${successCount + 1}/${submissions.length} for ${submission.studentName}...`)
         
-        const pdfResult = await pdfService.generateSubmissionReport(
+        // Generate PDF buffer (without uploading to MinIO)
+        const pdfBuffer = await pdfService.generateReportBuffer(
           submission,
           practicum
         )
         
-        // Update submission
-        submission.reportUrl = pdfResult.url
-        submission.reportGeneratedAt = new Date()
-        await submission.save()
+        console.log(`✅ PDF generated (${(pdfBuffer.length / 1024).toFixed(2)} KB)`)
         
         // Add to zip with student name
         const filename = `${submission.studentClass}_${submission.studentName}_${submission.studentNumber || submission._id}.pdf`
-        archive.append(Buffer.from(pdfResult.filename), { name: filename })
+        archive.append(pdfBuffer, { name: filename })
+        
+        console.log(`📁 Added to ZIP: ${filename}`)
         
         successCount++
         
       } catch (error) {
-        console.error(`Failed to generate report for ${submission.studentName}:`, error)
+        console.error(`❌ Failed to generate report for ${submission.studentName}:`, error)
         failCount++
       }
     }
+    
+    console.log(`\n📊 Bulk generation summary: ${successCount} success, ${failCount} failed`)
     
     // Finalize zip
     await archive.finalize()

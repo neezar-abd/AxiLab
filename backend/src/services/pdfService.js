@@ -3,7 +3,83 @@ import minioService from './minioService.js'
 
 class PDFService {
   /**
-   * Generate PDF laporan praktikum untuk satu submission
+   * Generate PDF buffer without uploading to MinIO (for bulk reports)
+   * @param {Object} submission - Submission document
+   * @param {Object} practicum - Practicum document
+   * @returns {Buffer} - PDF buffer
+   */
+  async generateReportBuffer(submission, practicum) {
+    let browser = null
+    
+    try {
+      console.log(`🚀 Launching Puppeteer for ${submission.studentName}...`)
+      
+      // Launch browser
+      browser = await puppeteer.launch({
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-web-security'
+        ]
+      })
+      
+      const page = await browser.newPage()
+      
+      console.log(`📝 Generating HTML template...`)
+      
+      // Generate HTML
+      const html = this.generateReportHTML(submission, practicum)
+      
+      console.log(`⏳ Setting content and waiting for render...`)
+      
+      // Set content
+      await page.setContent(html, { 
+        waitUntil: 'networkidle0',
+        timeout: 30000
+      })
+      
+      console.log(`🖨️ Generating PDF...`)
+      
+      // Generate PDF
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20mm',
+          right: '15mm',
+          bottom: '20mm',
+          left: '15mm'
+        },
+        displayHeaderFooter: true,
+        headerTemplate: '<div></div>',
+        footerTemplate: `
+          <div style="font-size: 10px; text-align: center; width: 100%; color: #666;">
+            <span class="pageNumber"></span> / <span class="totalPages"></span>
+          </div>
+        `
+      })
+      
+      await browser.close()
+      browser = null
+      
+      console.log(`✅ PDF buffer generated successfully (${(pdfBuffer.length / 1024).toFixed(2)} KB)`)
+      
+      return pdfBuffer
+      
+    } catch (error) {
+      if (browser) {
+        await browser.close()
+      }
+      console.error('❌ PDF buffer generation error:', error)
+      throw new Error(`PDF generation failed: ${error.message}`)
+    }
+  }
+
+  /**
+   * Generate PDF laporan praktikum untuk satu submission (with upload to MinIO)
    * @param {Object} submission - Submission document
    * @param {Object} practicum - Practicum document
    * @returns {Object} - { url, filename }

@@ -6,7 +6,8 @@ import {
   deleteDataPoint,
   submitSubmission,
   gradeSubmission,
-  getMySubmissions
+  getMySubmissions,
+  validateSubmission
 } from '../controllers/submissionController.js'
 import { authMiddleware, requireRole } from '../middlewares/auth.middleware.js'
 import upload, { handleMulterError } from '../middlewares/upload.middleware.js'
@@ -27,6 +28,7 @@ router.post(
 
 router.get('/my-submissions', authMiddleware, requireRole('student'), getMySubmissions)
 router.get('/:id', authMiddleware, getSubmissionDetail)
+router.get('/:id/validate', authMiddleware, requireRole('student'), validateSubmission)
 router.put('/:id/data/:dataNumber', authMiddleware, requireRole('student'), updateDataPoint)
 router.delete('/:id/data/:dataNumber', authMiddleware, requireRole('student'), deleteDataPoint)
 router.post('/:id/submit', authMiddleware, requireRole('student'), submitSubmission)

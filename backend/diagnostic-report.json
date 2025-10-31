@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-10-31T06:46:42.432Z",
+  "system": {
+    "platform": "win32",
+    "arch": "x64",
+    "nodeVersion": "v22.16.0",
+    "totalMemory": "15.25 GB",
+    "freeMemory": "1.29 GB"
+  },
+  "environment": {
+    "NODE_ENV": "development",
+    "MONGODB_URI": "✓ set",
+    "MINIO_ENDPOINT": "✓ set",
+    "JWT_SECRET": "✓ set"
+  }
+}

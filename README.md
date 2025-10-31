@@ -1,14 +1,16 @@
-# AXI-Lab - Platform Praktikum Digital
+# 📚 AXI-Lab - Platform Praktikum Digital
 
 Platform praktikum digital dengan integrasi AI untuk analisis data praktikum siswa.
 
-## 🎯 Konsep
+> **📖 Untuk dokumentasi lengkap, lihat [DOCUMENTATION.md](DOCUMENTATION.md)**
 
-AXI-Lab terdiri dari 3 komponen utama:
+## 🎯 Tentang Proyek
+
+AXI-Lab adalah platform praktikum digital yang terdiri dari:
 
 1. **Backend Server** - Express.js + MongoDB + Redis + MinIO
 2. **Dashboard Guru (Web)** - Next.js untuk monitoring & penilaian
-3. **App Siswa (Tablet)** - Next.js PWA untuk pengumpulan data di lapangan
+3. **App Siswa (PWA)** - Next.js PWA untuk pengumpulan data di lapangan
 
 ## 🏗️ Arsitektur Sistem
 
@@ -228,15 +230,14 @@ Lihat **backend/QUICK_START.md** untuk panduan lengkap!
 
 ## 📖 Dokumentasi
 
-- **Backend:** [backend/README.md](backend/README.md)
-  - [Quick Start Guide](backend/QUICK_START.md) - Setup 5 menit
-  - [API Testing Guide](backend/API_TESTING.md) - Testing 23 endpoints
-  - [Implementation Summary](backend/IMPLEMENTATION_SUMMARY.md) - Overview implementasi
-- **Frontend:** [docs/FRONTEND_README.md](docs/FRONTEND_README.md)
-- **Student App:** [student-app/README.md](student-app/README.md)
-- **Testing:** [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)
-- **Environment Setup:** [docs/ENV_SETUP.md](docs/ENV_SETUP.md)
-- **Quick Test:** [docs/QUICK_TEST.md](docs/QUICK_TEST.md)
+**📌 Dokumentasi Utama:**
+- **[DOCUMENTATION.md](DOCUMENTATION.md)** - Dokumentasi lengkap semua aspek proyek
+
+**Dokumentasi Spesifik:**
+- [Backend README](backend/README.md) - Backend API documentation
+- [Backend Quick Start](backend/QUICK_START.md) - Setup backend 5 menit
+- [API Testing Guide](backend/API_TESTING.md) - Testing 23 endpoints
+- [Student App README](student-app/README.md) - Student PWA documentation
 
 ## 🎓 Cara Kerja Sistem
 

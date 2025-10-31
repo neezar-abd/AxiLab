@@ -88,35 +88,84 @@ export default function PracticumDetailPage() {
 
       // Call API to generate bulk reports (will return a ZIP file)
       const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/report/generate-bulk/${id}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/report/generate-bulk/${id}`;
+      
+      console.log('📤 Requesting bulk reports from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', response.headers);
+
+      // Handle different error cases
       if (!response.ok) {
-        throw new Error('Failed to generate bulk reports');
+        let errorMessage = 'Failed to generate bulk reports';
+        
+        // Try to parse error message from response
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+            console.error('❌ Error data:', errorData);
+          } catch (e) {
+            console.error('❌ Could not parse error response');
+          }
+        }
+        
+        // Show specific error messages
+        if (response.status === 404) {
+          throw new Error('Praktikum tidak ditemukan');
+        } else if (response.status === 403) {
+          throw new Error('Anda tidak memiliki akses untuk download laporan ini');
+        } else if (response.status === 400) {
+          throw new Error(errorMessage || 'Tidak ada submission yang bisa di-generate');
+        } else if (response.status === 500) {
+          throw new Error(`Server error: ${errorMessage}`);
+        } else {
+          throw new Error(`HTTP ${response.status}: ${errorMessage}`);
+        }
       }
+
+      console.log('✅ Generating reports successful, downloading blob...');
 
       // Download the ZIP file
       const blob = await response.blob();
+      
+      console.log(`📦 Blob received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+      
+      if (blob.size === 0) {
+        throw new Error('File ZIP kosong - tidak ada data yang bisa didownload');
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `laporan_${practicum.code}.zip`;
+      a.download = `laporan_${practicum.code}_${Date.now()}.zip`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
 
-      toast.success('Laporan berhasil didownload!', { id: 'bulk-reports' });
+      console.log('✅ Download triggered successfully!');
+      toast.success(`Laporan berhasil didownload! (${(blob.size / 1024 / 1024).toFixed(2)} MB)`, { id: 'bulk-reports' });
+      
     } catch (error: any) {
-      console.error('Error downloading reports:', error);
-      toast.error('Gagal mendownload laporan', { id: 'bulk-reports' });
+      console.error('❌ Error downloading reports:', error);
+      
+      // Show detailed error message
+      const errorMessage = error.message || 'Gagal mendownload laporan - silakan coba lagi';
+      toast.error(errorMessage, { id: 'bulk-reports', duration: 5000 });
+      
     } finally {
       setDownloadingReports(false);
     }
