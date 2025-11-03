@@ -28,19 +28,19 @@ export default function CreatePracticumPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div>
         <Link
           href="/dashboard/practicums"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Daftar Praktikum</span>
+          <span>Back to Practicums</span>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Buat Praktikum Baru</h1>
-        <p className="text-gray-500 mt-2">
-          Buat praktikum baru dengan field custom sesuai kebutuhan
+        <h1 className="text-2xl font-semibold text-gray-900">Create New Practicum</h1>
+        <p className="text-sm text-gray-600 mt-1">
+          Create a new practicum with custom fields as needed
         </p>
       </div>
 

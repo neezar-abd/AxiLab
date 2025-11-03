@@ -129,43 +129,43 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Selamat Datang, {user?.name}! 👋</h1>
-        <p className="text-blue-100">
-          Kelola praktikum digital Anda dan pantau progress siswa secara real-time
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Welcome back, {user?.name}! 👋</h1>
+        <p className="text-sm text-gray-600">
+          Manage your digital practicums and monitor student progress in real-time
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 ${stat.bgColor} rounded-lg`}>
-                  <Icon className={`w-6 h-6 ${stat.iconColor}`} />
+            <div key={index} className="bg-white rounded-lg p-5 border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`p-2.5 ${stat.bgColor} rounded-md`}>
+                  <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
               </div>
               <h3 className="text-gray-600 text-sm font-medium mb-1">{stat.title}</h3>
-              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
             </div>
           );
         })}
       </div>
 
       {/* Recent Practicums */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-5 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Praktikum Terbaru</h2>
-            <p className="text-sm text-gray-500 mt-1">5 praktikum terbaru Anda</p>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Practicums</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Your 5 most recent practicums</p>
           </div>
           <Link
             href="/dashboard/practicums"
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+            className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
           >
-            Lihat Semua
+            View All
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -174,16 +174,16 @@ export default function DashboardPage() {
           {practicums.length === 0 ? (
             <div className="p-12 text-center">
               <FlaskConical className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Praktikum</h3>
-              <p className="text-gray-500 mb-6">
-                Mulai buat praktikum pertama Anda dan pantau progress siswa
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Practicums Yet</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Start by creating your first practicum and monitor student progress
               </p>
               <Link
                 href="/dashboard/practicums/create"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm"
               >
-                <Plus className="w-5 h-5" />
-                Buat Praktikum
+                <Plus className="w-4 h-4" />
+                Create Practicum
               </Link>
             </div>
           ) : (
@@ -191,47 +191,47 @@ export default function DashboardPage() {
               <Link
                 key={practicum._id}
                 href={`/dashboard/practicums/${practicum._id}`}
-                className="p-6 hover:bg-gray-50 transition-colors block"
+                className="p-5 hover:bg-gray-50 transition-colors block"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{practicum.title}</h3>
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <h3 className="text-base font-semibold text-gray-900">{practicum.title}</h3>
                       <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        className={`px-2 py-0.5 text-xs font-medium rounded border ${
                           practicum.status === 'active'
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-green-50 text-green-700 border-green-200'
                             : practicum.status === 'draft'
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-red-100 text-red-700'
+                            ? 'bg-gray-50 text-gray-700 border-gray-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
                         }`}
                       >
                         {practicum.status === 'active'
-                          ? 'Aktif'
+                          ? 'Active'
                           : practicum.status === 'draft'
                           ? 'Draft'
-                          : 'Ditutup'}
+                          : 'Closed'}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{practicum.description}</p>
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-5 text-sm text-gray-500">
+                      <div className="flex items-center gap-1.5">
                         <Users className="w-4 h-4" />
-                        <span>{practicum.totalParticipants} peserta</span>
+                        <span>{practicum.totalParticipants} students</span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <FileText className="w-4 h-4" />
-                        <span>{practicum.totalSubmissions} submission</span>
+                        <span>{practicum.totalSubmissions} submissions</span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>{practicum.totalGraded} dinilai</span>
+                        <span>{practicum.totalGraded} graded</span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">Kode</p>
-                    <p className="text-2xl font-bold text-blue-600">{practicum.code}</p>
+                  <div className="text-right ml-4">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Code</p>
+                    <p className="text-xl font-semibold text-blue-600">{practicum.code}</p>
                   </div>
                 </div>
               </Link>
@@ -241,32 +241,32 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           href="/dashboard/practicums/create"
-          className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-6 hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
+          className="bg-white rounded-lg border border-dashed border-gray-300 p-6 hover:border-blue-500 hover:bg-blue-50 transition-all text-center group"
         >
-          <Plus className="w-12 h-12 text-gray-400 group-hover:text-blue-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-1">Buat Praktikum Baru</h3>
-          <p className="text-sm text-gray-500">Tambahkan praktikum untuk siswa</p>
+          <Plus className="w-10 h-10 text-gray-400 group-hover:text-blue-600 mx-auto mb-3 transition-colors" />
+          <h3 className="font-semibold text-gray-900 mb-1 text-sm">Create New Practicum</h3>
+          <p className="text-sm text-gray-500">Add practicum for students</p>
         </Link>
 
         <Link
           href="/dashboard/monitoring"
-          className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-6 hover:border-green-500 hover:bg-green-50 transition-all text-center group"
+          className="bg-white rounded-lg border border-dashed border-gray-300 p-6 hover:border-green-500 hover:bg-green-50 transition-all text-center group"
         >
-          <TrendingUp className="w-12 h-12 text-gray-400 group-hover:text-green-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-1">Monitoring Real-time</h3>
-          <p className="text-sm text-gray-500">Pantau progress siswa live</p>
+          <TrendingUp className="w-10 h-10 text-gray-400 group-hover:text-green-600 mx-auto mb-3 transition-colors" />
+          <h3 className="font-semibold text-gray-900 mb-1 text-sm">Real-time Monitoring</h3>
+          <p className="text-sm text-gray-500">Monitor student progress live</p>
         </Link>
 
         <Link
           href="/dashboard/grading"
-          className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-6 hover:border-purple-500 hover:bg-purple-50 transition-all text-center group"
+          className="bg-white rounded-lg border border-dashed border-gray-300 p-6 hover:border-purple-500 hover:bg-purple-50 transition-all text-center group"
         >
-          <CheckCircle2 className="w-12 h-12 text-gray-400 group-hover:text-purple-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-gray-900 mb-1">Mulai Penilaian</h3>
-          <p className="text-sm text-gray-500">Nilai submission siswa</p>
+          <CheckCircle2 className="w-10 h-10 text-gray-400 group-hover:text-purple-600 mx-auto mb-3 transition-colors" />
+          <h3 className="font-semibold text-gray-900 mb-1 text-sm">Start Grading</h3>
+          <p className="text-sm text-gray-500">Grade student submissions</p>
         </Link>
       </div>
     </div>

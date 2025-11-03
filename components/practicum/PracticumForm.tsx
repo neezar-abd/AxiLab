@@ -177,15 +177,15 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Basic Information */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Informasi Dasar</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Informasi Dasar</h2>
 
         <div className="space-y-4">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1.5">
               Judul Praktikum <span className="text-red-500">*</span>
             </label>
             <input
@@ -194,7 +194,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
               type="text"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               placeholder="Contoh: Fotosintesis pada Tumbuhan"
               required
             />
@@ -202,7 +202,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1.5">
               Deskripsi
             </label>
             <textarea
@@ -210,16 +210,16 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               placeholder="Jelaskan tujuan dan cara kerja praktikum..."
             />
           </div>
 
           {/* Subject & Grade */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Mata Pelajaran <span className="text-red-500">*</span>
               </label>
               <input
@@ -228,14 +228,14 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 type="text"
                 value={formData.subject}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="Contoh: Biologi"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Kelas
               </label>
               <input
@@ -244,16 +244,16 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 type="text"
                 value={formData.grade}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 placeholder="Contoh: X IPA 1"
               />
             </div>
           </div>
 
           {/* Status & Min Data Points */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Status
               </label>
               <select
@@ -261,7 +261,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="draft">Draft</option>
                 <option value="active">Aktif</option>
@@ -270,7 +270,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
             </div>
 
             <div>
-              <label htmlFor="minDataPoints" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="minDataPoints" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Minimal Data Point
               </label>
               <input
@@ -280,15 +280,15 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 min="1"
                 value={formData.minDataPoints}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
           </div>
 
           {/* Start & End Date */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Tanggal Mulai
               </label>
               <input
@@ -297,12 +297,12 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 type="date"
                 value={formData.startDate}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
 
             <div>
-              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Tanggal Selesai
               </label>
               <input
@@ -311,7 +311,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 type="date"
                 value={formData.endDate}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               />
             </div>
           </div>
@@ -319,13 +319,13 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
       </div>
 
       {/* Scoring Configuration */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Konfigurasi Penilaian</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Konfigurasi Penilaian</h2>
 
         <div className="space-y-4">
           {/* Max Score */}
           <div>
-            <label htmlFor="maxScore" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="maxScore" className="block text-sm font-medium text-gray-700 mb-1.5">
               Nilai Maksimal
             </label>
             <input
@@ -335,52 +335,52 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
               min="1"
               value={formData.maxScore}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             />
           </div>
 
           {/* Scoring Breakdown */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Bobot Penilaian (Total: {formData.scoring.data + formData.scoring.aiAnalysis + formData.scoring.conclusion}%)
             </label>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-4">
-                <label className="w-40 text-sm text-gray-700">Data Lapangan:</label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <label className="w-32 text-sm text-gray-700">Data Lapangan:</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={formData.scoring.data}
                   onChange={(e) => handleScoringChange('data', parseInt(e.target.value) || 0)}
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
                 <span className="text-sm text-gray-500">%</span>
               </div>
 
-              <div className="flex items-center gap-4">
-                <label className="w-40 text-sm text-gray-700">Analisis AI:</label>
+              <div className="flex items-center gap-3">
+                <label className="w-32 text-sm text-gray-700">Analisis AI:</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={formData.scoring.aiAnalysis}
                   onChange={(e) => handleScoringChange('aiAnalysis', parseInt(e.target.value) || 0)}
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
                 <span className="text-sm text-gray-500">%</span>
               </div>
 
-              <div className="flex items-center gap-4">
-                <label className="w-40 text-sm text-gray-700">Kesimpulan:</label>
+              <div className="flex items-center gap-3">
+                <label className="w-32 text-sm text-gray-700">Kesimpulan:</label>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={formData.scoring.conclusion}
                   onChange={(e) => handleScoringChange('conclusion', parseInt(e.target.value) || 0)}
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  className="w-20 px-2 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
                 <span className="text-sm text-gray-500">%</span>
               </div>
@@ -390,10 +390,10 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
       </div>
 
       {/* Dynamic Fields */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Field Pengumpulan Data</h2>
+            <h2 className="text-lg font-bold text-gray-900">Field Pengumpulan Data</h2>
             <p className="text-sm text-gray-500 mt-1">
               Tambahkan field yang akan diisi siswa ({fields.length} field)
             </p>
@@ -401,7 +401,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
         </div>
 
         {/* Field Type Buttons */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-5">
           {(['image', 'video', 'text', 'number', 'select'] as const).map((type) => {
             const Icon = fieldTypeIcons[type];
             return (
@@ -409,7 +409,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                 key={type}
                 type="button"
                 onClick={() => addField(type)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
+                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors border border-blue-200"
               >
                 <Icon className="w-4 h-4" />
                 <span className="text-sm font-medium">Tambah {fieldTypeLabels[type]}</span>
@@ -420,75 +420,75 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
 
         {/* Fields List */}
         {fields.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-            <Plus className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+          <div className="text-center py-10 border border-dashed border-gray-300 rounded-md">
+            <Plus className="w-10 h-10 text-gray-400 mx-auto mb-2" />
             <p className="text-gray-500 mb-1">Belum ada field</p>
             <p className="text-sm text-gray-400">Klik tombol di atas untuk menambahkan field</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {fields.map((field, index) => {
               const Icon = fieldTypeIcons[field.type];
               const isExpanded = expandedFields.includes(index);
 
               return (
-                <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                <div key={index} className="border border-gray-200 rounded-md overflow-hidden">
                   {/* Field Header */}
-                  <div className="flex items-center gap-3 p-4 bg-gray-50">
-                    <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
-                    <Icon className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center gap-2 p-3 bg-gray-50">
+                    <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
+                    <Icon className="w-4 h-4 text-blue-600" />
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">
-                        {field.label || `Field ${index + 1}`} <span className="text-sm text-gray-500">({fieldTypeLabels[field.type]})</span>
+                      <p className="font-medium text-gray-900 text-sm">
+                        {field.label || `Field ${index + 1}`} <span className="text-xs text-gray-500">({fieldTypeLabels[field.type]})</span>
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => toggleExpand(index)}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
                     >
                       {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-600" />
+                        <ChevronUp className="w-4 h-4 text-gray-600" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-600" />
+                        <ChevronDown className="w-4 h-4 text-gray-600" />
                       )}
                     </button>
                     <button
                       type="button"
                       onClick={() => removeField(index)}
-                      className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-red-50 text-red-600 rounded-md transition-colors"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* Field Configuration (Expandable) */}
                   {isExpanded && (
-                    <div className="p-4 space-y-4 bg-white">
+                    <div className="p-3 space-y-3 bg-white">
                       {/* Field Name */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
                           Nama Field (Internal)
                         </label>
                         <input
                           type="text"
                           value={field.name}
                           onChange={(e) => updateField(index, { name: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-sm"
                           placeholder="field_name"
                         />
                       </div>
 
                       {/* Field Label */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
                           Label (Yang dilihat siswa) <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           value={field.label}
                           onChange={(e) => updateField(index, { label: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-sm"
                           placeholder="Contoh: Foto Daun"
                           required
                         />
@@ -511,7 +511,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                       {/* Select Options */}
                       {field.type === 'select' && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1.5">
                             Pilihan
                           </label>
                           <div className="space-y-2">
@@ -521,13 +521,13 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                                   type="text"
                                   value={option}
                                   onChange={(e) => updateSelectOption(index, optIndex, e.target.value)}
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-sm"
                                   placeholder={`Opsi ${optIndex + 1}`}
                                 />
                                 <button
                                   type="button"
                                   onClick={() => removeSelectOption(index, optIndex)}
-                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                  className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -536,7 +536,7 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
                             <button
                               type="button"
                               onClick={() => addSelectOption(index)}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                             >
                               <Plus className="w-4 h-4" />
                               Tambah Opsi
@@ -547,8 +547,8 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
 
                       {/* AI Configuration */}
                       {(field.type === 'image' || field.type === 'video') && (
-                        <div className="border-t border-gray-200 pt-4">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="border-t border-gray-200 pt-3">
+                          <div className="flex items-center gap-2 mb-2">
                             <input
                               type="checkbox"
                               id={`ai-enabled-${index}`}
@@ -564,14 +564,14 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
 
                           {field.aiEnabled && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                 Prompt untuk AI
                               </label>
                               <textarea
                                 value={field.aiPrompt}
                                 onChange={(e) => updateField(index, { aiPrompt: e.target.value })}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
                                 placeholder="Contoh: Identifikasi jenis daun, warna, bentuk, dan kondisinya"
                               />
                               <p className="text-xs text-gray-500 mt-1">
@@ -591,20 +591,20 @@ export default function PracticumForm({ initialData, onSubmit, loading }: Practi
       </div>
 
       {/* Submit Button */}
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-5 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
         >
           Batal
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          <Save className="w-5 h-5" />
+          <Save className="w-4 h-4" />
           <span>{loading ? 'Menyimpan...' : initialData ? 'Update Praktikum' : 'Buat Praktikum'}</span>
         </button>
       </div>
