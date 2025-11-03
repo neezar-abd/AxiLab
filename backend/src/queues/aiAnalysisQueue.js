@@ -28,6 +28,18 @@ export async function enqueueAIAnalysis(submissionId, dataPointNumber, fieldName
     // Use the extracted bucket name directly
     const bucket = bucketName || process.env.MINIO_BUCKET_PHOTOS
     
+    // Detect MIME type from file extension
+    const fileExtension = filename.split('.').pop().toLowerCase()
+    let mimeType = 'image/jpeg'
+    
+    if (fileExtension === 'mp4' || fileExtension === 'webm' || fileExtension === 'mov') {
+      mimeType = 'video/mp4'
+    } else if (fileExtension === 'png') {
+      mimeType = 'image/png'
+    } else if (fileExtension === 'jpg' || fileExtension === 'jpeg') {
+      mimeType = 'image/jpeg'
+    }
+    
     const job = await aiAnalysisQueue.add(
       'analyze-image',
       {
@@ -37,7 +49,7 @@ export async function enqueueAIAnalysis(submissionId, dataPointNumber, fieldName
         fileUrl,
         bucket: bucket || 'photos',
         filename,
-        mimeType: 'image/jpeg', // Will be handled by MinIO
+        mimeType,
         aiPrompt: aiPrompt || 'Analisis foto ini dengan detail'
       },
       {

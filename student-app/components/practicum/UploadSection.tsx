@@ -160,7 +160,7 @@ export default function UploadSection({
                   onChange={(e) => onFieldChange(field.name, e.target.value)}
                   placeholder={`Enter ${field.label.toLowerCase()}...`}
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none resize-none text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none resize-none text-sm text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal"
                   required={field.required}
                 />
               )}
@@ -172,7 +172,7 @@ export default function UploadSection({
                   value={formData[field.name] || ''}
                   onChange={(e) => onFieldChange(field.name, e.target.value)}
                   placeholder={`Enter ${field.label.toLowerCase()}...`}
-                  className="w-full h-10 md:h-11 px-3 text-sm border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                  className="w-full h-10 md:h-11 px-3 text-sm text-gray-900 font-medium border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none placeholder:text-gray-400 placeholder:font-normal"
                   required={field.required}
                 />
               )}
@@ -182,12 +182,12 @@ export default function UploadSection({
                 <select
                   value={formData[field.name] || ''}
                   onChange={(e) => onFieldChange(field.name, e.target.value)}
-                  className="w-full h-10 md:h-11 px-3 text-sm border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-white"
+                  className="w-full h-10 md:h-11 px-3 text-sm text-gray-900 font-medium border border-gray-300 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-white"
                   required={field.required}
                 >
-                  <option value="">Select {field.label.toLowerCase()}...</option>
+                  <option value="" className="text-gray-400">Select {field.label.toLowerCase()}...</option>
                   {field.options?.map((option) => (
-                    <option key={option} value={option}>
+                    <option key={option} value={option} className="text-gray-900">
                       {option}
                     </option>
                   ))}
