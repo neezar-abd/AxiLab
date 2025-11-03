@@ -151,25 +151,25 @@ export default function StyledDataPointCard({ dataPoint, index, onDelete, canDel
 
               {/* Image Display */}
               {field.fieldType === 'image' && field.fileUrl && (
-                <div className="relative group/image">
-                  <img
-                    src={field.fileUrl}
-                    alt={field.fieldLabel}
-                    className="w-full h-auto max-h-[400px] md:max-h-[500px] object-contain bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                <div className="space-y-2">
+                  {/* Image Preview Button */}
+                  <button
                     onClick={() => setLightboxImage(field.fileUrl || null)}
-                    loading="lazy"
-                  />
-                  {/* Zoom Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/20 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover/image:opacity-100 pointer-events-none">
-                    <div className="bg-white/90 rounded-full p-2">
-                      <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    className="w-full p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md transition-colors flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
+                      <span className="text-sm font-medium text-gray-700">View Image</span>
                     </div>
-                  </div>
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </button>
                   {field.fileSize && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      File size: {(field.fileSize / 1024).toFixed(2)} KB
+                    <p className="text-xs text-gray-500">
+                      {(field.fileSize / 1024).toFixed(2)} KB
                     </p>
                   )}
                 </div>

@@ -218,13 +218,13 @@ export default function PracticumPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Praktikum Tidak Ditemukan</h2>
-          <p className="text-gray-600 mb-6">Data praktikum tidak dapat dimuat.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Practicum Not Found</h2>
+          <p className="text-gray-600 mb-6">Unable to load practicum data.</p>
           <button
             onClick={() => router.push('/join')}
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
           >
-            Kembali
+            Go Back
           </button>
         </div>
       </div>
@@ -246,7 +246,7 @@ export default function PracticumPage() {
       />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 pb-6 space-y-4 md:space-y-5">
         {/* Info Card */}
         <PracticumInfoCard
           title={practicum.title}
@@ -279,14 +279,14 @@ export default function PracticumPage() {
 
         {/* Data Points List */}
         <div className="animate-slide-up-fade" style={{ animationDelay: '300ms' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              Data Terkumpul ({submission.data?.length || 0})
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+              Collected Data ({submission.data?.length || 0})
             </h2>
             {submission.status === 'in_progress' && (
               <button
                 onClick={() => submission._id && refreshSubmission(submission._id)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors active:scale-95"
+                className="p-2 hover:bg-gray-100 rounded-md transition-colors active:scale-95"
                 aria-label="Refresh data"
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +297,7 @@ export default function PracticumPage() {
           </div>
 
           {submission.data && submission.data.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {submission.data.map((dataPoint, index) => (
                 <StyledDataPointCard
                   key={`dp-${dataPoint.number}-${index}-${refreshKey}`}
@@ -320,12 +320,12 @@ export default function PracticumPage() {
           <div className="max-w-7xl mx-auto">
             <button
               onClick={handleSubmitClick}
-              className="w-full h-14 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg rounded-xl hover:from-green-600 hover:to-emerald-700 hover:shadow-xl transition-all duration-200 active:scale-98 flex items-center justify-center gap-2"
+              className="w-full h-12 md:h-14 bg-green-600 text-white font-semibold text-base md:text-lg rounded-md hover:bg-green-700 hover:shadow-md transition-all duration-150 active:scale-98 flex items-center justify-center gap-2"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Submit Semua Data</span>
+              <span>Submit All Data</span>
             </button>
           </div>
         </div>

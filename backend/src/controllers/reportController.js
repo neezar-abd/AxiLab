@@ -3,6 +3,7 @@ import Practicum from '../models/Practicum.js'
 import pdfService from '../services/pdfService.js'
 import archiver from 'archiver'
 import { PassThrough } from 'stream'
+import mongoose from 'mongoose'
 
 /**
  * @route   POST /api/report/generate/:submissionId
@@ -79,22 +80,45 @@ export const generateSubmissionReport = async (req, res) => {
  */
 export const generateBulkReports = async (req, res) => {
   try {
+    console.log('🔍 Bulk report request received')
+    console.log('   Practicum ID:', req.params.practicumId)
+    console.log('   User ID:', req.userId)
+    console.log('   User Role:', req.userRole)
+    
+    // Validate practicum ID format
+    if (!mongoose.Types.ObjectId.isValid(req.params.practicumId)) {
+      console.error('❌ Invalid practicum ID format:', req.params.practicumId)
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid practicum ID format'
+      })
+    }
+    
     const practicum = await Practicum.findById(req.params.practicumId)
     
     if (!practicum) {
+      console.error('❌ Practicum not found:', req.params.practicumId)
       return res.status(404).json({
         success: false,
         message: 'Practicum not found'
       })
     }
     
+    console.log('✅ Practicum found:', practicum.title)
+    console.log('✅ Practicum found:', practicum.title)
+    
     // Check ownership
     if (practicum.teacherId.toString() !== req.userId.toString()) {
+      console.error('❌ Access denied - not practicum owner')
+      console.error('   Practicum teacher:', practicum.teacherId)
+      console.error('   Request user:', req.userId)
       return res.status(403).json({
         success: false,
         message: 'Access denied'
       })
     }
+    
+    console.log('✅ Authorization passed')
     
     // Get all graded submissions
     const submissions = await Submission.find({
@@ -102,7 +126,10 @@ export const generateBulkReports = async (req, res) => {
       status: { $in: ['submitted', 'graded'] }
     })
     
+    console.log(`📊 Found ${submissions.length} submissions`)
+    
     if (submissions.length === 0) {
+      console.error('❌ No submissions found')
       return res.status(400).json({
         success: false,
         message: 'No submissions to generate reports'

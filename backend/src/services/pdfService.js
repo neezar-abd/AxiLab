@@ -475,44 +475,114 @@ class PDFService {
         <h3>Data ${number}</h3>
     `
     
-    // Render data fields
-    const dataEntries = Object.entries(dataPoint.data)
+    // Check if dataPoint has fields array (new structure) or data object (old structure)
+    const fields = dataPoint.fields || []
+    
+    if (fields.length === 0 && !dataPoint.data) {
+      html += '<p style="color: #999;">No data available</p>'
+      html += '</div>'
+      return html
+    }
     
     html += '<div class="data-grid">'
     
-    for (const [key, value] of dataEntries) {
-      // Skip jika value adalah object URL (akan dirender terpisah)
-      if (typeof value === 'object' && value.url) {
-        continue
-      }
-      
-      html += `
-        <div class="data-field">
-          <div class="field-label">${key.replace(/_/g, ' ').toUpperCase()}</div>
-          <div class="field-value">${value}</div>
-        </div>
-      `
-    }
-    
-    html += '</div>'
-    
-    // Render photos/images
-    for (const [key, value] of dataEntries) {
-      if (typeof value === 'object' && value.url) {
+    // Render fields from new structure
+    if (fields.length > 0) {
+      for (const field of fields) {
+        // Skip image/file fields (will be rendered separately)
+        if (field.fieldType === 'image' || field.fieldType === 'video') {
+          continue
+        }
+        
         html += `
-          <div class="photo-container">
-            <p style="color: #64748b; margin-bottom: 10px; font-weight: 600;">
-              ${key.replace(/_/g, ' ').toUpperCase()}
-            </p>
-            <img src="${value.url}" alt="${key}" />
+          <div class="data-field">
+            <div class="field-label">${field.fieldLabel || field.fieldName}</div>
+            <div class="field-value">${field.value !== undefined ? field.value : '-'}</div>
+          </div>
+        `
+      }
+    } else if (dataPoint.data) {
+      // Fallback to old structure
+      const dataEntries = Object.entries(dataPoint.data)
+      
+      for (const [key, value] of dataEntries) {
+        // Skip jika value adalah object URL (akan dirender terpisah)
+        if (typeof value === 'object' && value !== null && value.url) {
+          continue
+        }
+        
+        html += `
+          <div class="data-field">
+            <div class="field-label">${key.replace(/_/g, ' ').toUpperCase()}</div>
+            <div class="field-value">${value}</div>
           </div>
         `
       }
     }
     
+    html += '</div>'
+    
+    // Render photos/images from new structure
+    if (fields.length > 0) {
+      for (const field of fields) {
+        if ((field.fieldType === 'image' || field.fieldType === 'video') && field.fileUrl) {
+          html += `
+            <div class="photo-container">
+              <p style="color: #64748b; margin-bottom: 10px; font-weight: 600;">
+                ${field.fieldLabel || field.fieldName}
+              </p>
+              <img src="${field.fileUrl}" alt="${field.fieldName}" />
+            </div>
+          `
+        }
+      }
+    } else if (dataPoint.data) {
+      // Fallback to old structure
+      const dataEntries = Object.entries(dataPoint.data)
+      
+      for (const [key, value] of dataEntries) {
+        if (typeof value === 'object' && value !== null && value.url) {
+          html += `
+            <div class="photo-container">
+              <p style="color: #64748b; margin-bottom: 10px; font-weight: 600;">
+                ${key.replace(/_/g, ' ').toUpperCase()}
+              </p>
+              <img src="${value.url}" alt="${key}" />
+            </div>
+          `
+        }
+      }
+    }
+    
     // Render AI analysis jika ada
-    if (dataPoint.aiAnalysis && dataPoint.aiStatus === 'completed') {
-      html += this.generateAIAnalysisHTML(dataPoint.aiAnalysis)
+    if (dataPoint.aiStatus === 'completed') {
+      // Check for AI analysis in fields
+      let hasAiAnalysis = false
+      
+      if (fields.length > 0) {
+        for (const field of fields) {
+          if (field.aiAnalysis && field.aiStatus === 'completed') {
+            if (!hasAiAnalysis) {
+              html += '<div class="ai-analysis"><h4>🤖 Analisis AI</h4><div class="ai-analysis-content">'
+              hasAiAnalysis = true
+            }
+            
+            html += `
+              <div class="ai-field">
+                <div class="ai-label">${field.fieldLabel || field.fieldName}</div>
+                <div class="ai-value">${field.aiAnalysis.displayText || field.aiAnalysis.formattedText || field.aiAnalysis.rawText || '-'}</div>
+              </div>
+            `
+          }
+        }
+        
+        if (hasAiAnalysis) {
+          html += '</div></div>'
+        }
+      } else if (dataPoint.aiAnalysis) {
+        // Fallback to old structure
+        html += this.generateAIAnalysisHTML(dataPoint.aiAnalysis)
+      }
     }
     
     html += '</div>'

@@ -43,18 +43,18 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-blue-600">Join Praktikum</h1>
-              <p className="text-gray-600 mt-1">Halo, {user?.name}!</p>
+              <h1 className="text-2xl font-semibold text-gray-900 mb-1">Join Practicum</h1>
+              <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
             </div>
             <button
               onClick={logout}
-              className="text-red-600 hover:text-red-700 text-sm font-medium"
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium transition"
             >
               Logout
             </button>
@@ -62,23 +62,23 @@ export default function JoinPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-md">
+              <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
           {/* Join Form */}
-          <form onSubmit={handleJoin} className="space-y-6">
+          <form onSubmit={handleJoin} className="space-y-5">
             <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
-                Kode Praktikum
+              <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Practicum Code
               </label>
               <input
                 id="code"
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-center text-lg font-mono"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center text-base font-mono tracking-wide"
                 placeholder="PRAK-2025-XXXXX"
                 required
               />
@@ -87,16 +87,17 @@ export default function JoinPage() {
             <button
               type="submit"
               disabled={loading || !code.trim()}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium hover:bg-blue-700 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
-              {loading ? 'Joining...' : 'Join Praktikum'}
+              {loading ? 'Joining...' : 'Join Practicum'}
             </button>
           </form>
 
           {/* Info */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-600">
-              💡 Masukkan kode praktikum yang diberikan oleh guru Anda
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-xs text-gray-500 flex items-start gap-2">
+              <span className="text-blue-600">💡</span>
+              <span>Enter the practicum code provided by your instructor</span>
             </p>
           </div>
         </div>

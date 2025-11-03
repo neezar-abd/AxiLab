@@ -88,9 +88,31 @@ export default function PracticumDetailPage() {
 
       // Call API to generate bulk reports (will return a ZIP file)
       const token = localStorage.getItem('token');
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/report/generate-bulk/${id}`;
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
       
+      // NEXT_PUBLIC_API_URL already includes /api
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/report/generate-bulk/${id}`;
+      
+      console.log('=== BULK REPORT REQUEST DEBUG INFO ===');
       console.log('📤 Requesting bulk reports from:', apiUrl);
+      console.log('📤 Practicum ID:', id);
+      console.log('📤 Practicum Teacher:', practicum.teacher?.name || practicum.teacherName || 'Unknown');
+      console.log('📤 Current User:', user?.name || 'Unknown');
+      console.log('📤 Current User ID:', user?._id || 'Unknown');
+      console.log('📤 Token:', token ? 'Present' : 'Missing');
+      
+      if (user && practicum.teacher) {
+        const practicumOwnerId = practicum.teacher._id;
+        if (user._id !== practicumOwnerId) {
+          console.warn('⚠️  WARNING: Current user is NOT the practicum owner!');
+          console.warn('   Practicum owner:', practicumOwnerId);
+          console.warn('   Current user:', user._id);
+          toast.error('Anda bukan pemilik praktikum ini. Hanya guru yang membuat praktikum yang bisa download laporan.', { id: 'bulk-reports', duration: 5000 });
+          setDownloadingReports(false);
+          return;
+        }
+      }
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -100,7 +122,7 @@ export default function PracticumDetailPage() {
       });
 
       console.log('📥 Response status:', response.status);
-      console.log('📥 Response headers:', response.headers);
+      console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
 
       // Handle different error cases
       if (!response.ok) {
@@ -108,13 +130,26 @@ export default function PracticumDetailPage() {
         
         // Try to parse error message from response
         const contentType = response.headers.get('content-type');
+        console.log('📥 Content-Type:', contentType);
+        
         if (contentType && contentType.includes('application/json')) {
           try {
             const errorData = await response.json();
             errorMessage = errorData.message || errorMessage;
             console.error('❌ Error data:', errorData);
           } catch (e) {
-            console.error('❌ Could not parse error response');
+            console.error('❌ Could not parse error response:', e);
+          }
+        } else {
+          // Try to get text response
+          try {
+            const textResponse = await response.text();
+            console.error('❌ Text response:', textResponse);
+            if (textResponse) {
+              errorMessage = textResponse;
+            }
+          } catch (e) {
+            console.error('❌ Could not read response:', e);
           }
         }
         
