@@ -5,8 +5,8 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('budi@teacher.com');
+  const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -23,23 +23,8 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = async (role: 'teacher' | 'student') => {
-    setLoading(true);
-    try {
-      if (role === 'teacher') {
-        await login('budi@teacher.com', 'password123');
-      } else {
-        await login('siswa1@student.com', 'password123');
-      }
-    } catch (error) {
-      console.error('Quick login error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">;
       <div className="w-full max-w-md">
         {/* Login Form */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -62,7 +47,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm text-gray-900"
                   placeholder="Enter your email"
                   required
                 />
@@ -81,7 +66,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm text-gray-900"
                   placeholder="Enter your password"
                   required
                 />
@@ -104,31 +89,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Login Buttons */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center mb-3">Quick Login (Demo)</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleQuickLogin('teacher')}
-                disabled={loading}
-                className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors disabled:opacity-50"
-              >
-                Teacher
-              </button>
-              <button
-                onClick={() => handleQuickLogin('student')}
-                disabled={loading}
-                className="px-4 py-2 border border-green-600 text-green-600 rounded-md text-sm font-medium hover:bg-green-50 transition-colors disabled:opacity-50"
-              >
-                Student
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 text-center mt-3">
-              Teacher: <span className="font-medium text-gray-700">budi@teacher.com</span> | Student: <span className="font-medium text-gray-700">siswa1@student.com</span><br />
-              Password: <span className="font-medium text-gray-700">password123</span>
-            </p>
-          </div>
         </div>
 
         {/* Footer */}

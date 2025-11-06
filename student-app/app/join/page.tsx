@@ -78,7 +78,7 @@ export default function JoinPage() {
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center text-base font-mono tracking-wide"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-center text-base font-mono tracking-wide text-gray-900"
                 placeholder="PRAK-2025-XXXXX"
                 required
               />

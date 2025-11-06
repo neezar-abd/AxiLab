@@ -132,10 +132,12 @@ export default function PracticumPage() {
         if (value !== undefined && value !== null && value !== '') {
           if (field.type === 'image' || field.type === 'video') {
             if (value instanceof File) {
+              // File fields use field name directly (handled by multer)
               uploadFormData.append(field.name, value)
             }
           } else {
-            uploadFormData.append(field.name, value.toString())
+            // Non-file fields use field_ prefix (as expected by backend)
+            uploadFormData.append(`field_${field.name}`, value.toString())
           }
         }
       })
